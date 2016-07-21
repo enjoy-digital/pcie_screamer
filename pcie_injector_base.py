@@ -109,6 +109,14 @@ class BaseSoC(SoCSDRAM):
                             sdram_module.geom_settings,
                             sdram_module.timing_settings)
 
+        # led blink
+        counter = Signal(32)
+        self.sync += counter.eq(counter + 1)
+        self.comb += [
+            platform.request("user_led", 0).eq(counter[27]),
+            platform.request("user_led", 1).eq(counter[28])
+        ]
+
 
 def main():
     parser = argparse.ArgumentParser(description="PCIe Injector LiteX SoC")

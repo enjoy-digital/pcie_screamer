@@ -4,6 +4,9 @@ from litex.build.xilinx import XilinxPlatform, VivadoProgrammer
 _io = [
     ("clk100", 0, Pins("R4"), IOStandard("LVCMOS33")),
 
+    ("user_led", 0, Pins("AB2"), IOStandard("LVCMOS33")),
+    ("user_led", 1, Pins("AB1"), IOStandard("LVCMOS33")),
+
     ("serial", 0,
         Subsignal("tx", Pins("T1")),
         Subsignal("rx", Pins("U1")),
