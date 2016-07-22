@@ -6,7 +6,7 @@ import pcie_injector_platform as pcie_injector
 
 class Blinky(Module):
     def __init__(self, platform):
-        self.submodules.crg = CRG(platform.request("clk100"))
+        self.submodules.crg = CRG(platform.request("clk100"), platform.request("user_btn"))
 
         # led blink
         counter = Signal(32)

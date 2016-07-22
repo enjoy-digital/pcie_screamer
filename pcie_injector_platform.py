@@ -7,6 +7,9 @@ _io = [
     ("user_led", 0, Pins("AB2"), IOStandard("LVCMOS33")),
     ("user_led", 1, Pins("AB1"), IOStandard("LVCMOS33")),
 
+    ("user_btn", 0, Pins("W6"), IOStandard("LVCMOS33")),
+    ("user_btn", 1, Pins("V5"), IOStandard("LVCMOS33")),
+
     ("serial", 0,
         Subsignal("tx", Pins("T1")),
         Subsignal("rx", Pins("U1")),
