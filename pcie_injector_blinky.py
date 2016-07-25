@@ -12,8 +12,8 @@ class Blinky(Module):
         counter = Signal(32)
         self.sync += counter.eq(counter + 1)
         self.comb += [
-            platform.request("user_led", 0).eq(platform.request("user_btn", 0)),
-            platform.request("user_led", 1).eq(platform.request("user_btn", 1))
+            platform.request("user_led", 0).eq(counter[26] & platform.request("user_btn", 0)),
+            platform.request("user_led", 1).eq(counter[27] & platform.request("user_btn", 1))
         ]
 
 def main():
