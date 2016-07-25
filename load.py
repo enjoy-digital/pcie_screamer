@@ -2,4 +2,4 @@
 from litex.build.xilinx import VivadoProgrammer
 
 prog = VivadoProgrammer()
-prog.load_bitstream("build/top.bit")
+prog.load_bitstream("build/gateware/top.bit")

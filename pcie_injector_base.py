@@ -25,7 +25,7 @@ class _CRG(Module):
         self.clock_domains.cd_clk100 = ClockDomain()
 
         clk100 = platform.request("clk100")
-        rst = Signal() # FIXME
+        rst = Signal(reset=1) # FIXME
 
         pll_locked = Signal()
         pll_fb = Signal()
