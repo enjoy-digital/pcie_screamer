@@ -41,9 +41,8 @@ _io = [
         Misc("SLEW=FAST"),
     ),
 
-    ("pcie_x1_clkreq1", 0, Pins("V4"), IOStandard("LVCMOS33")),
     ("pcie_x1", 0,
-        Subsignal("rst_n", Pins("AB5"), IOStandard("LVCMOS33")),
+        Subsignal("rst_n", Pins("AB7"), IOStandard("LVCMOS33")),
         Subsignal("clk_p", Pins("F6")),
         Subsignal("clk_n", Pins("E6")),
         Subsignal("rx_p", Pins("B8")),
