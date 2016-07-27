@@ -6,6 +6,7 @@ from litex.gen import *
 from litex.gen.genlib.io import CRG
 from litex.gen.genlib.resetsync import AsyncResetSynchronizer
 from litex.gen.genlib.misc import timeline
+from litex.build.tools import write_to_file
 
 import pcie_injector_platform as pcie_injector
 
@@ -20,6 +21,8 @@ from litepcie.phy.s7pciephy import S7PCIEPHY
 from litepcie.core import LitePCIeEndpoint, LitePCIeMSI
 from litepcie.frontend.dma import LitePCIeDMA
 from litepcie.frontend.wishbone import LitePCIeWishboneBridge
+
+import cpu_interface
 
 
 class _CRG(Module, AutoCSR):
@@ -114,8 +117,11 @@ def main():
 
     platform = pcie_injector.Platform()
     soc = PCIeDMASoC(platform, **soc_core_argdict(args))
-    builder = Builder(soc, output_dir="build")
+    builder = Builder(soc, output_dir="build", compile_gateware=True)
     vns = builder.build()
+
+    csr_header = cpu_interface.get_csr_header(soc.get_csr_regions(), soc.get_constants())
+    write_to_file(os.path.join("software", "linux", "kernel", "csr.h"), csr_header)
 
 if __name__ == "__main__":
     main()
