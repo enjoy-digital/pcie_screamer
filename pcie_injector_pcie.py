@@ -97,6 +97,14 @@ class PCIeDMASoC(SoCCore):
         for k, v in sorted(self.interrupts.items()):
             self.comb += self.msi.irqs[self.interrupt_map[k]].eq(v)
 
+        # led blink
+        counter = Signal(32)
+        self.sync += counter.eq(counter + 1)
+        self.comb += [
+            platform.request("user_led", 0).eq(counter[26] & platform.request("user_btn", 0)),
+            platform.request("user_led", 1).eq(counter[27] & platform.request("user_btn", 1))
+        ]
+
 
 def main():
     parser = argparse.ArgumentParser(description="PCIe Injector LiteX SoC")
