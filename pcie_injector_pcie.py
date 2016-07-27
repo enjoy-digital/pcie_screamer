@@ -105,6 +105,9 @@ class PCIeDMASoC(SoCCore):
             platform.request("user_led", 1).eq(counter[27] & platform.request("user_btn", 1))
         ]
 
+        # set clkreq1 to 0
+        self.comb += platform.request("pcie_x1_clkreq1").eq(0)
+
 
 def main():
     parser = argparse.ArgumentParser(description="PCIe Injector LiteX SoC")
