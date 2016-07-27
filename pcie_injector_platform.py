@@ -41,14 +41,14 @@ _io = [
         Misc("SLEW=FAST"),
     ),
 
-    ("pcie_x1", 0,
+    ("pcie_x2", 0,
         Subsignal("rst_n", Pins("AB7"), IOStandard("LVCMOS33")),
         Subsignal("clk_p", Pins("F6")),
         Subsignal("clk_n", Pins("E6")),
-        Subsignal("rx_p", Pins("B8")),
-        Subsignal("rx_n", Pins("A8")),
-        Subsignal("tx_p", Pins("B4")),
-        Subsignal("tx_n", Pins("A4"))
+        Subsignal("rx_p", Pins("B8 D11")),
+        Subsignal("rx_n", Pins("A8 C11")),
+        Subsignal("tx_p", Pins("B4 D5")),
+        Subsignal("tx_n", Pins("A4 C5"))
     ),
 ]
 
