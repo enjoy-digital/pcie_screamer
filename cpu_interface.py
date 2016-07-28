@@ -14,6 +14,7 @@ def _get_rw_functions(reg_name, reg_base, nwords, busword, read_only):
 def get_csr_header(regions, constants):
     r = "#ifndef __GENERATED_CSR_H\n#define __GENERATED_CSR_H\n"
     for name, origin, busword, obj in regions:
+        origin = origin & 0xffff # FIXME
         if isinstance(obj, Memory):
             r += "#define "+name.upper()+"_BASE "+hex(origin)+"\n"
         else:
@@ -40,9 +41,11 @@ def get_csr_csv(csr_regions=None, constants=None, memory_regions=None):
 
     if csr_regions is not None:
         for name, origin, busword, obj in csr_regions:
+            origin = origin & 0xffff # FIXME
             r += "csr_base,{},0x{:08x},,\n".format(name, origin)
 
         for name, origin, busword, obj in csr_regions:
+            origin = origin & 0xffff # FIXME
             if not isinstance(obj, Memory):
                 for csr in obj:
                     nr = (csr.size + busword - 1)//busword

@@ -58,9 +58,9 @@ class PCIeDMASoC(SoCCore):
     }
     interrupt_map.update(SoCCore.interrupt_map)
     mem_map = {
-        "csr": 0x00000000,  # (shadow @0x80000000)
+        "csr": 0x00000000  # (shadow @0x80000000)
     }
-    mem_map.update(SoCCore.mem_map)
+    mem_map.update(SoCCore.mem_map) # FIXME: why is csr not updated?
 
     def __init__(self, platform, with_uart_bridge=True):
         clk_freq = 125*1000000
