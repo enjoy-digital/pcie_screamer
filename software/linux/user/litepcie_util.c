@@ -208,8 +208,8 @@ void dump_version(void)
         fprintf(stderr, "Could not init driver\n");
         exit(1);
     }
-    printf("sysid=0x%x\n", litepcie_readl(s, CSR_IDENTIFIER_SYSID_ADDR));
-    printf("frequency=%d\n", litepcie_readl(s, CSR_IDENTIFIER_FREQUENCY_ADDR));
+    //printf("sysid=0x%x\n", litepcie_readl(s, CSR_IDENTIFIER_SYSID_ADDR));
+    //printf("frequency=%d\n", litepcie_readl(s, CSR_IDENTIFIER_FREQUENCY_ADDR));
 
     litepcie_close(s);
 }
