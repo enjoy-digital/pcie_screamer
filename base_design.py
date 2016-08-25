@@ -6,7 +6,7 @@ from litex.gen import *
 from litex.gen.genlib.resetsync import AsyncResetSynchronizer
 from litex.gen.fhdl.specials import Keep
 
-import pcie_injector_platform as pcie_injector
+import platform as pcie_injector
 
 from litex.soc.integration.soc_core import mem_decoder
 from litex.soc.integration.soc_sdram import *

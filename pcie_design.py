@@ -8,7 +8,7 @@ from litex.gen.genlib.resetsync import AsyncResetSynchronizer
 from litex.gen.genlib.misc import timeline
 from litex.build.tools import write_to_file
 
-import pcie_injector_platform as pcie_injector
+import platform as pcie_injector
 
 from litex.soc.interconnect.csr import *
 from litex.soc.interconnect import wishbone
