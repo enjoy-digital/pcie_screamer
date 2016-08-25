@@ -51,6 +51,16 @@ _io = [
         Subsignal("tx_n", Pins("A4"))
     ),
 
+    ("pcie_x2", 0,
+        Subsignal("rst_n", Pins("AB7"), IOStandard("LVCMOS33")),
+        Subsignal("clk_p", Pins("F6")),
+        Subsignal("clk_n", Pins("E6")),
+        Subsignal("rx_p", Pins("B8 D11")),
+        Subsignal("rx_n", Pins("A8 C11")),
+        Subsignal("tx_p", Pins("B4 D5")),
+        Subsignal("tx_n", Pins("A4 C5"))
+    ),
+
     ("usb_fifo_clock", 0, Pins("D17"), IOStandard("LVCMOS33")),
     ("usb_fifo_rst", 0, Pins("K22"), IOStandard("LVCMOS33")),
     ("usb_fifo", 0,
