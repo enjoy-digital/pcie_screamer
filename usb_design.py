@@ -16,8 +16,14 @@ from litex.soc.cores.uart.bridge import UARTWishboneBridge
 
 from ft245 import phy_description, FT245PHYSynchronous
 
+from litescope import LiteScopeAnalyzer
+
 
 class BaseSoC(SoCCore):
+    csr_map = {
+        "analyzer": 16
+    }
+    csr_map.update(SoCCore.csr_map)
     def __init__(self, platform):
         clk_freq = 100*1000000
         SoCCore.__init__(self, platform, clk_freq,
@@ -54,6 +60,21 @@ class BaseSoC(SoCCore):
 
         self.platform.add_period_constraint(clk100, 10.0)
 
+        # analyzer
+        analyzer_signals = [
+            self.usb_phy.source.valid,
+            self.usb_phy.source.ready,
+            self.usb_phy.source.data,
+
+            self.usb_phy.sink.valid,
+            self.usb_phy.sink.ready,
+            self.usb_phy.sink.data
+        ]
+        self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)
+
+    def do_exit(self, vns):
+        self.analyzer.export_csv(vns, "test/analyzer.csv")
+
 
 def main():
     parser = argparse.ArgumentParser(description="PCIe Injector LiteX SoC")
@@ -63,8 +84,9 @@ def main():
 
     platform = pcie_injector.Platform()
     soc = BaseSoC(platform, **soc_core_argdict(args))
-    builder = Builder(soc, output_dir="build")
+    builder = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
     vns = builder.build()
+    soc.do_exit(vns)
 
 if __name__ == "__main__":
     main()
