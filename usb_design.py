@@ -68,7 +68,16 @@ class BaseSoC(SoCCore):
 
             self.usb_phy.sink.valid,
             self.usb_phy.sink.ready,
-            self.usb_phy.sink.data
+            self.usb_phy.sink.data,
+
+            usb_pads.data,
+            usb_pads.be,
+            usb_pads.rxf_n,
+            usb_pads.txe_n,
+            usb_pads.rd_n,
+            usb_pads.wr_n,
+            usb_pads.oe_n,
+            usb_pads.siwua,
         ]
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)
 
