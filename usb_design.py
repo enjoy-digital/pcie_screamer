@@ -14,7 +14,7 @@ from litex.soc.integration.builder import *
 from litex.soc.interconnect import stream
 from litex.soc.cores.uart.bridge import UARTWishboneBridge
 
-from ft245 import phy_description, FT245PHYSynchronous
+from gateware.ft245 import phy_description, FT245PHYSynchronous
 
 from litescope import LiteScopeAnalyzer
 
