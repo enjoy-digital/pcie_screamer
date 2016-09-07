@@ -1,0 +1,10 @@
+-test pcie_design with software
+-add packetizer/depacketizer to USB and simulate
+-add litescope to packetizer/depacketizer
+-test packetizer/depacketizer on hardware (with integrated litescope)
+-add wishbone bridge to USB and simulate
+-add litescope to wishbone bridge
+-test wishbone bridge on hardware (with integrated litescope)
+-add mux to connect PCIe TLPs to USB packetizer/depacketizer
+-test TLPs reception/injection on hardware
+-almost done :) 
