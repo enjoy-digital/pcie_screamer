@@ -15,7 +15,7 @@ from litex.soc.interconnect import stream
 from litex.soc.cores.uart.bridge import UARTWishboneBridge
 
 from gateware.ft245 import phy_description, FT245PHYSynchronous
-from gateware.packet import USBPacketizer, USBDepacketizer
+from gateware.usb import USBPacketizer, USBDepacketizer
 
 from litescope import LiteScopeAnalyzer
 
