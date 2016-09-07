@@ -15,6 +15,7 @@ from litex.soc.interconnect import stream
 from litex.soc.cores.uart.bridge import UARTWishboneBridge
 
 from gateware.ft245 import phy_description, FT245PHYSynchronous
+from gateware.packet import USBPacketizer, USBDepacketizer
 
 from litescope import LiteScopeAnalyzer
 
@@ -52,10 +53,12 @@ class BaseSoC(SoCCore):
         self.comb += usb_pads.be.eq(0xf)
 
         self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, 100*1000000)
-        self.submodules.usb_loopback_fifo = stream.SyncFIFO(phy_description(32), 8192)
+        self.submodules.usb_depacketizer = USBDepacketizer(clk_freq)
+        self.submodules.usb_packetizer = USBPacketizer()
         self.comb += [
-            self.usb_phy.source.connect(self.usb_loopback_fifo.sink),
-            self.usb_loopback_fifo.source.connect(self.usb_phy.sink)
+            self.usb_phy.source.connect(self.usb_depacketizer.sink),
+            self.usb_depacketizer.source.connect(self.usb_packetizer.sink),
+            self.usb_packetizer.source.connect(self.usb_phy.sink)
         ]
 
         self.platform.add_period_constraint(clk100, 10.0)
