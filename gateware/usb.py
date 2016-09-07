@@ -1,8 +1,11 @@
+from collections import OrderedDict
+
 from litex.gen.genlib.misc import WaitTimer
 
 from litex.soc.interconnect import stream
 from litex.soc.interconnect.stream import EndpointDescription
 from litex.soc.interconnect.stream_packet import *
+from litex.soc.interconnect.wishbonebridge import WishboneStreamingBridge
 
 
 packet_header_length = 12
@@ -21,6 +24,15 @@ def phy_description(dw):
     return EndpointDescription(payload_layout)
 
 
+def packet_description(dw):
+    param_layout = packet_header.get_layout()
+    payload_layout = [
+        ("data", dw),
+        ("error", dw//8)
+    ]
+    return EndpointDescription(payload_layout, param_layout)
+
+
 def user_description(dw):
     param_layout = [
         ("dst",    8),
@@ -31,6 +43,24 @@ def user_description(dw):
         ("error", dw//8)
     ]
     return EndpointDescription(payload_layout, param_layout)
+
+
+class LiteUSBMasterPort:
+    def __init__(self, dw):
+        self.source = stream.Endpoint(user_description(dw))
+        self.sink = stream.Endpoint(user_description(dw))
+
+
+class LiteUSBSlavePort:
+    def __init__(self, dw, tag):
+        self.sink = stream.Endpoint(user_description(dw))
+        self.source = stream.Endpoint(user_description(dw))
+        self.tag = tag
+
+
+class LiteUSBUserPort(LiteUSBSlavePort):
+    def __init__(self, dw, tag):
+        LiteUSBSlavePort.__init__(self, dw, tag)
 
 
 class USBPacketizer(Module):
@@ -192,3 +222,61 @@ class USBDepacketizer(Module):
                 cnt.eq(cnt + 1)
             )
         self.comb += last.eq(cnt == source.length - 1)
+
+
+class USBCrossbar(Module):
+    def __init__(self):
+        self.users = OrderedDict()
+        self.master = LiteUSBMasterPort(32)
+        self.dispatch_param = "dst"
+
+    def get_port(self, dst):
+        port = LiteUSBUserPort(32, dst)
+        if dst in self.users.keys():
+            raise ValueError("Destination {0:#x} already assigned".format(dst))
+        self.users[dst] = port
+        return port
+
+    def do_finalize(self):
+        # TX arbitrate
+        sinks = [port.sink for port in self.users.values()]
+        self.submodules.arbiter = Arbiter(sinks, self.master.source)
+
+        # RX dispatch
+        sources = [port.source for port in self.users.values()]
+        self.submodules.dispatcher = Dispatcher(self.master.sink,
+                                                sources,
+                                                one_hot=True)
+        cases = {}
+        cases["default"] = self.dispatcher.sel.eq(0)
+        for i, (k, v) in enumerate(self.users.items()):
+            cases[k] = self.dispatcher.sel.eq(2**i)
+        self.comb += \
+            Case(getattr(self.master.sink, self.dispatch_param), cases)
+
+
+class USBCore(Module):
+    def __init__(self, phy, clk_freq):
+        rx_pipeline = [phy]
+        tx_pipeline = [phy]
+
+        # depacketizer / packetizer
+        self.submodules.depacketizer = USBDepacketizer(clk_freq)
+        self.submodules.packetizer = USBPacketizer()
+        rx_pipeline += [self.depacketizer]
+        tx_pipeline += [self.packetizer]
+
+        # crossbar
+        self.submodules.crossbar = USBCrossbar()
+        rx_pipeline += [self.crossbar.master]
+        tx_pipeline += [self.crossbar.master]
+
+        # graph
+        self.submodules.rx_pipeline = stream.Pipeline(*rx_pipeline)
+        self.submodules.tx_pipeline = stream.Pipeline(*reversed(tx_pipeline))
+
+
+class USBWishboneBridge(WishboneStreamingBridge):
+    def __init__(self, port, clk_freq):
+        WishboneStreamingBridge.__init__(self, port, clk_freq)
+        self.comb += port.sink.dst.eq(port.tag)

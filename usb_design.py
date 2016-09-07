@@ -15,7 +15,7 @@ from litex.soc.interconnect import stream
 from litex.soc.cores.uart.bridge import UARTWishboneBridge
 
 from gateware.ft245 import phy_description, FT245PHYSynchronous
-from gateware.usb import USBPacketizer, USBDepacketizer
+from gateware.usb import USBCore, USBWishboneBridge
 
 from litescope import LiteScopeAnalyzer
 
@@ -25,6 +25,11 @@ class BaseSoC(SoCCore):
         "analyzer": 16
     }
     csr_map.update(SoCCore.csr_map)
+
+    usb_map = {
+        "bridge": 0
+    }
+
     def __init__(self, platform):
         clk_freq = 100*1000000
         SoCCore.__init__(self, platform, clk_freq,
@@ -53,15 +58,13 @@ class BaseSoC(SoCCore):
         self.comb += usb_pads.be.eq(0xf)
 
         self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, 100*1000000)
-        self.submodules.usb_depacketizer = USBDepacketizer(clk_freq)
-        self.submodules.usb_packetizer = USBPacketizer()
-        self.comb += [
-            self.usb_phy.source.connect(self.usb_depacketizer.sink),
-            self.usb_depacketizer.source.connect(self.usb_packetizer.sink),
-            self.usb_packetizer.source.connect(self.usb_phy.sink)
-        ]
-
+        self.submodules.usb_core = USBCore(self.usb_phy, clk_freq)
         self.platform.add_period_constraint(clk100, 10.0)
+
+        # Wishbone Bridge
+        usb_bridge_port = self.usb_core.crossbar.get_port(self.usb_map["bridge"])
+        self.submodules.usb_bridge = USBWishboneBridge(usb_bridge_port, self.clk_freq)
+        self.add_wb_master(self.usb_bridge.wishbone)
 
         # analyzer
         analyzer_signals = [
