@@ -1,19 +1,48 @@
 from litex.gen.genlib.misc import WaitTimer
 
 from litex.soc.interconnect import stream
+from litex.soc.interconnect.stream import EndpointDescription
+from litex.soc.interconnect.stream_packet import *
 
-from liteusb.common import *
+
+packet_header_length = 12
+packet_header_fields = {
+    "preamble": HeaderField(0,  0, 32),
+    "dst":      HeaderField(4,  0, 32),
+    "length":   HeaderField(8,  0, 32)
+}
+packet_header = Header(packet_header_fields,
+                       packet_header_length,
+                       swap_field_bytes=True)
 
 
-class LiteUSBPacketizer(Module):
+def phy_description(dw):
+    payload_layout = [("data", dw)]
+    return EndpointDescription(payload_layout)
+
+
+def user_description(dw):
+    param_layout = [
+        ("dst",    8),
+        ("length", 32)
+    ]
+    payload_layout = [
+        ("data", dw),
+        ("error", dw//8)
+    ]
+    return EndpointDescription(payload_layout, param_layout)
+
+
+class USBPacketizer(Module):
     def __init__(self):
-        self.sink = sink = stream.Endpoint(user_description(8))
-        self.source = source = stream.Endpoint(phy_description(8))
+        self.sink = sink = stream.Endpoint(user_description(32))
+        self.source = source = stream.Endpoint(phy_description(32))
 
         # # #
 
         # Packet description
         #   - preamble : 4 bytes
+        #   - unused   : 3 bytes
         #   - dst      : 1 byte
         #   - length   : 4 bytes
         #   - payload
@@ -24,6 +53,9 @@ class LiteUSBPacketizer(Module):
             0x5A,
             0xA5,
             # dst
+            Signal(8),
+            Signal(8),
+            Signal(8),
             sink.dst,
             # length
             sink.length[24:32],
@@ -32,7 +64,7 @@ class LiteUSBPacketizer(Module):
             sink.length[0:8],
         ]
 
-        header_unpack = stream.Unpack(len(header), phy_description(8))
+        header_unpack = stream.Unpack(len(header), phy_description(32))
         self.submodules += header_unpack
 
         for i, byte in enumerate(header):
@@ -68,21 +100,25 @@ class LiteUSBPacketizer(Module):
         )
 
 
-class LiteUSBDepacketizer(Module):
+class USBDepacketizer(Module):
     def __init__(self, clk_freq, timeout=10):
-        self.sink = sink = stream.Endpoint(phy_description(8))
-        self.source = source = stream.Endpoint(user_description(8))
+        self.sink = sink = stream.Endpoint(phy_description(32))
+        self.source = source = stream.Endpoint(user_description(32))
 
         # # #
 
         # Packet description
         #   - preamble : 4 bytes
+        #   - unused   : 3 bytes
         #   - dst      : 1 byte
         #   - length   : 4 bytes
         #   - payload
         preamble = Array(Signal(8) for i in range(4))
 
         header = [
+            Signal(8),
+            Signal(8),
+            Signal(8),
             # dst
             source.dst,
             # length
@@ -92,7 +128,7 @@ class LiteUSBDepacketizer(Module):
             source.length[0:8],
         ]
 
-        header_pack = ResetInserter()(stream.Pack(phy_description(8), len(header)))
+        header_pack = ResetInserter()(stream.Pack(phy_description(32), len(header)))
         self.submodules += header_pack
 
         for i, byte in enumerate(header):
