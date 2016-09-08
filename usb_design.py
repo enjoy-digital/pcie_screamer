@@ -15,7 +15,7 @@ from litex.soc.interconnect import stream
 from litex.soc.cores.uart.bridge import UARTWishboneBridge
 
 from gateware.ft245 import phy_description, FT245PHYSynchronous
-from gateware.usb import USBCore, USBWishboneBridge
+from gateware.usb import USBDepacketizer
 
 from litescope import LiteScopeAnalyzer
 
@@ -58,54 +58,31 @@ class BaseSoC(SoCCore):
         self.comb += usb_pads.be.eq(0xf)
 
         self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, 100*1000000)
-        self.submodules.usb_core = USBCore(self.usb_phy, clk_freq)
         self.platform.add_period_constraint(clk100, 10.0)
 
-        # Wishbone Bridge
-        usb_bridge_port = self.usb_core.crossbar.get_port(self.usb_map["bridge"])
-        self.submodules.usb_bridge = USBWishboneBridge(usb_bridge_port, self.clk_freq)
-        self.add_wb_master(self.usb_bridge.wishbone)
+        self.submodules.usb_depacketizer = USBDepacketizer(clk_freq)
+        self.comb += [
+            self.usb_phy.source.connect(self.usb_depacketizer.sink),
+            self.usb_depacketizer.source.ready.eq(1)
+        ]
 
         # analyzer
-        """
         analyzer_signals = [
             self.usb_phy.source.valid,
             self.usb_phy.source.ready,
             self.usb_phy.source.data,
 
-            self.usb_phy.sink.valid,
-            self.usb_phy.sink.ready,
-            self.usb_phy.sink.data,
+            self.usb_depacketizer.source.valid,
+            self.usb_depacketizer.source.ready,
+            self.usb_depacketizer.source.dst,
+            self.usb_depacketizer.source.length,
+            self.usb_depacketizer.source.data,
+            self.usb_depacketizer.source.error,
 
-            usb_pads.data,
-            usb_pads.be,
-            usb_pads.rxf_n,
-            usb_pads.txe_n,
-            usb_pads.rd_n,
-            usb_pads.wr_n,
-            usb_pads.oe_n,
-            usb_pads.siwua,
+            self.usb_depacketizer.debug,
         ]
-        """
-        analyzer_signals = [
-            self.usb_phy.source.valid,
-            self.usb_phy.source.ready,
-            self.usb_phy.source.data,
 
-            self.usb_core.depacketizer.source.valid,
-            self.usb_core.depacketizer.source.ready,
-            self.usb_core.depacketizer.source.dst,
-            self.usb_core.depacketizer.source.length,
-            self.usb_core.depacketizer.source.data,
-            self.usb_core.depacketizer.source.error,
-
-            self.usb_core.depacketizer.debug,
-        ]
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)
-
-        # pattern to send over usb:
-        #0x5a, 0xa5, 0x5a, 0xa5, 0, 0, 0, 0, length >> 24, length >> 16, length >> 8, length >> 0, data
-
 
     def do_exit(self, vns):
         self.analyzer.export_csv(vns, "test/analyzer.csv")

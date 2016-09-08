@@ -8,8 +8,9 @@ wb.open()
 
 analyzer = LiteScopeAnalyzerDriver(wb.regs, "analyzer", debug=True)
 analyzer.configure_trigger(cond={"usb_phy_read_fifo_source_valid" : 1})
+#analyzer.configure_trigger(cond={})
 analyzer.configure_subsampler(1)
-analyzer.run(offset=128, length=1024)
+analyzer.run(offset=16, length=64)
 while not analyzer.done():
     pass
 analyzer.upload()

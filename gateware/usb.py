@@ -145,19 +145,13 @@ class USBDepacketizer(Module):
         #   - dst      : 1 byte
         #   - length   : 4 bytes
         #   - payload
-        preamble = Array(Signal(8) for i in range(4))
+        preamble = Signal(32)
 
         header = [
-            Signal(8),
-            Signal(8),
-            Signal(8),
             # dst
             source.dst,
             # length
-            source.length[24:32],
-            source.length[16:24],
-            source.length[8:16],
-            source.length[0:8],
+            source.length
         ]
 
         header_pack = ResetInserter()(stream.Pack(phy_description(32), len(header)))
@@ -170,18 +164,10 @@ class USBDepacketizer(Module):
         fsm = FSM(reset_state="IDLE")
         self.submodules += fsm
 
-        self.comb += preamble[0].eq(sink.data)
-        for i in range(1, 4):
-            self.sync += If(sink.valid & sink.ready,
-                    preamble[i].eq(preamble[i-1])
-            )
+        self.comb += preamble.eq(sink.data)
         fsm.act("IDLE",
             sink.ready.eq(1),
-            If((preamble[3] == 0x5a) &
-               (preamble[2] == 0xa5) &
-               (preamble[1] == 0x5a) &
-               (preamble[0] == 0xa5) &
-               sink.valid,
+            If((sink.data == 0x5aa55aa5) & sink.valid,
                    NextState("RECEIVE_HEADER")
             ),
             header_pack.source.ready.eq(1),
