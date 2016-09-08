@@ -45,22 +45,22 @@ def user_description(dw):
     return EndpointDescription(payload_layout, param_layout)
 
 
-class LiteUSBMasterPort:
+class USBMasterPort:
     def __init__(self, dw):
         self.source = stream.Endpoint(user_description(dw))
         self.sink = stream.Endpoint(user_description(dw))
 
 
-class LiteUSBSlavePort:
+class USBSlavePort:
     def __init__(self, dw, tag):
         self.sink = stream.Endpoint(user_description(dw))
         self.source = stream.Endpoint(user_description(dw))
         self.tag = tag
 
 
-class LiteUSBUserPort(LiteUSBSlavePort):
+class USBUserPort(USBSlavePort):
     def __init__(self, dw, tag):
-        LiteUSBSlavePort.__init__(self, dw, tag)
+        USBSlavePort.__init__(self, dw, tag)
 
 
 class USBPacketizer(Module):
@@ -78,10 +78,10 @@ class USBPacketizer(Module):
         #   - payload
         header = [
             # preamble
-            0x5A,
-            0xA5,
-            0x5A,
-            0xA5,
+            0x5a,
+            0xa5,
+            0x5a,
+            0xa5,
             # dst
             Signal(8),
             Signal(8),
@@ -135,6 +135,8 @@ class USBDepacketizer(Module):
         self.sink = sink = stream.Endpoint(phy_description(32))
         self.source = source = stream.Endpoint(user_description(32))
 
+        self.debug = Signal(8)
+
         # # #
 
         # Packet description
@@ -175,14 +177,15 @@ class USBDepacketizer(Module):
             )
         fsm.act("IDLE",
             sink.ready.eq(1),
-            If((preamble[3] == 0x5A) &
-               (preamble[2] == 0xA5) &
-               (preamble[1] == 0x5A) &
-               (preamble[0] == 0xA5) &
+            If((preamble[3] == 0x5a) &
+               (preamble[2] == 0xa5) &
+               (preamble[1] == 0x5a) &
+               (preamble[0] == 0xa5) &
                sink.valid,
                    NextState("RECEIVE_HEADER")
             ),
             header_pack.source.ready.eq(1),
+            self.debug.eq(0),
         )
 
         self.submodules.timer = WaitTimer(clk_freq*timeout)
@@ -197,7 +200,8 @@ class USBDepacketizer(Module):
                 NextState("COPY")
             ).Else(
                 sink.ready.eq(1)
-            )
+            ),
+            self.debug.eq(1),
         )
 
         self.comb += header_pack.reset.eq(self.timer.done)
@@ -212,7 +216,8 @@ class USBDepacketizer(Module):
             sink.ready.eq(source.ready),
             If((source.valid & source.ready & last) | self.timer.done,
                 NextState("IDLE")
-            )
+            ),
+            self.debug.eq(2)
         )
 
         self.sync += \
@@ -227,11 +232,11 @@ class USBDepacketizer(Module):
 class USBCrossbar(Module):
     def __init__(self):
         self.users = OrderedDict()
-        self.master = LiteUSBMasterPort(32)
+        self.master = USBMasterPort(32)
         self.dispatch_param = "dst"
 
     def get_port(self, dst):
-        port = LiteUSBUserPort(32, dst)
+        port = USBUserPort(32, dst)
         if dst in self.users.keys():
             raise ValueError("Destination {0:#x} already assigned".format(dst))
         self.users[dst] = port

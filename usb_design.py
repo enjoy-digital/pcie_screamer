@@ -67,6 +67,7 @@ class BaseSoC(SoCCore):
         self.add_wb_master(self.usb_bridge.wishbone)
 
         # analyzer
+        """
         analyzer_signals = [
             self.usb_phy.source.valid,
             self.usb_phy.source.ready,
@@ -85,7 +86,26 @@ class BaseSoC(SoCCore):
             usb_pads.oe_n,
             usb_pads.siwua,
         ]
+        """
+        analyzer_signals = [
+            self.usb_phy.source.valid,
+            self.usb_phy.source.ready,
+            self.usb_phy.source.data,
+
+            self.usb_core.depacketizer.source.valid,
+            self.usb_core.depacketizer.source.ready,
+            self.usb_core.depacketizer.source.dst,
+            self.usb_core.depacketizer.source.length,
+            self.usb_core.depacketizer.source.data,
+            self.usb_core.depacketizer.source.error,
+
+            self.usb_core.depacketizer.debug,
+        ]
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)
+
+        # pattern to send over usb:
+        #0x5a, 0xa5, 0x5a, 0xa5, 0, 0, 0, 0, length >> 24, length >> 16, length >> 8, length >> 0, data
+
 
     def do_exit(self, vns):
         self.analyzer.export_csv(vns, "test/analyzer.csv")
