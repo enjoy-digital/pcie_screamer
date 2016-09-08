@@ -117,7 +117,7 @@ def main():
 
     platform = pcie_injector.Platform()
     soc = PCIeDMASoC(platform, **soc_core_argdict(args))
-    builder = Builder(soc, output_dir="build", compile_gateware=True)
+    builder = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
     vns = builder.build()
 
     csr_header = cpu_interface.get_csr_header(soc.get_csr_regions(), soc.get_constants())
