@@ -18,48 +18,17 @@ from gateware.ft245 import phy_description, FT245PHYSynchronous
 from gateware.usb import USBCore
 from gateware.etherbone import Etherbone
 
-from litex.soc.interconnect.csr import *
-
 from litescope import LiteScopeAnalyzer
-
-
-class USBStreamer(Module, AutoCSR):
-    def __init__(self):
-        self.trig = CSR()
-        self.source = source = stream.Endpoint(user_description(32))
-
-        # # #
-
-        fsm = FSM(reset_state="IDLE")
-        self.submodules += fsm
-
-        fsm.act("IDLE",
-            If(self.trig.re,
-                NextState("SEND")
-            )
-        )
-
-        fsm.act("SEND",
-            source.valid.eq(1),
-            source.dst.eq(0x02),
-            source.length.eq(1),
-            source.last.eq(1),
-            source.data.eq(0xdeadbeef),
-            If(source.ready,
-                NextState("IDLE")
-            )
-        )
 
 
 class BaseSoC(SoCCore):
     csr_map = {
-        "analyzer": 16,
-        "usb_streamer": 17
+        "analyzer": 16
     }
     csr_map.update(SoCCore.csr_map)
 
     usb_map = {
-        "bridge": 0
+        "wishbone": 0
     }
 
     def __init__(self, platform):
@@ -84,18 +53,18 @@ class BaseSoC(SoCCore):
             platform.request("user_led", 1).eq(counter[27] & platform.request("user_btn", 1))
         ]
 
-        # usb,
+        # usb core,
         usb_pads = platform.request("usb_fifo")
         self.comb += [
             usb_pads.rst.eq(1),
             usb_pads.be.eq(0xf)
         ]
-
         self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, 100*1000000)
         self.submodules.usb_core = USBCore(self.usb_phy, clk_freq)
         self.platform.add_period_constraint(clk100, 10.0)
 
-        self.submodules.etherbone = Etherbone(self.usb_core, 0)
+        # usb <--> wishbone
+        self.submodules.etherbone = Etherbone(self.usb_core, self.usb_map["wishbone"])
         self.add_wb_master(self.etherbone.master.bus)
 
         # analyzer
@@ -106,7 +75,19 @@ class BaseSoC(SoCCore):
 
             self.usb_phy.sink.valid,
             self.usb_phy.sink.ready,
-            self.usb_phy.sink.data
+            self.usb_phy.sink.data,
+
+            self.etherbone.master.bus.adr,
+            self.etherbone.master.bus.dat_w,
+            self.etherbone.master.bus.dat_r,
+            self.etherbone.master.bus.sel,
+            self.etherbone.master.bus.cyc,
+            self.etherbone.master.bus.stb,
+            self.etherbone.master.bus.ack,
+            self.etherbone.master.bus.we,
+            self.etherbone.master.bus.cti,
+            self.etherbone.master.bus.bte,
+            self.etherbone.master.bus.err,
         ]
 
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)
