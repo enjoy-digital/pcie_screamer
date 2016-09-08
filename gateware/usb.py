@@ -78,20 +78,11 @@ class USBPacketizer(Module):
         #   - payload
         header = [
             # preamble
-            0x5a,
-            0xa5,
-            0x5a,
-            0xa5,
+            0x5aa55aa5,
             # dst
-            Signal(8),
-            Signal(8),
-            Signal(8),
             sink.dst,
             # length
-            sink.length[24:32],
-            sink.length[16:24],
-            sink.length[8:16],
-            sink.length[0:8],
+            sink.length
         ]
 
         header_unpack = stream.Unpack(len(header), phy_description(32))
