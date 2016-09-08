@@ -1,8 +1,4 @@
--fix LiteX generation for PCIe (CSRs should be mapped to 0)
 -test pcie_design with software (seems to be OK for CSR, need to test DMA)
--add packetizer/depacketizer to USB and simulate
--add litescope to packetizer/depacketizer
--test packetizer/depacketizer on hardware (with integrated litescope)
 -add wishbone bridge to USB and simulate
 -add litescope to wishbone bridge
 -test wishbone bridge on hardware (with integrated litescope)
