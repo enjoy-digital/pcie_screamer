@@ -57,10 +57,8 @@ class PCIeDMASoC(SoCCore):
         "dma_reader": 1
     }
     interrupt_map.update(SoCCore.interrupt_map)
-    mem_map = {
-        "csr": 0x00000000  # (shadow @0x80000000)
-    }
-    mem_map.update(SoCCore.mem_map) # FIXME: why is csr not updated?
+    mem_map = SoCCore.mem_map
+    mem_map["csr"] = 0x00000000
 
     def __init__(self, platform, with_uart_bridge=True):
         clk_freq = 125*1000000
@@ -117,7 +115,7 @@ def main():
 
     platform = pcie_injector.Platform()
     soc = PCIeDMASoC(platform, **soc_core_argdict(args))
-    builder = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
+    builder = Builder(soc, output_dir="build", csr_csv="test/csr.csv", compile_gateware=False)
     vns = builder.build()
 
     csr_header = cpu_interface.get_csr_header(soc.get_csr_regions(), soc.get_constants())
