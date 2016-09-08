@@ -15,11 +15,13 @@ from litex.soc.interconnect import stream
 from litex.soc.cores.uart.bridge import UARTWishboneBridge
 
 from gateware.ft245 import phy_description, FT245PHYSynchronous
-from gateware.usb import USBDepacketizer, USBPacketizer, user_description
+from gateware.usb import USBCore
+from gateware.etherbone import Etherbone
 
 from litex.soc.interconnect.csr import *
 
 from litescope import LiteScopeAnalyzer
+
 
 class USBStreamer(Module, AutoCSR):
     def __init__(self):
@@ -82,26 +84,19 @@ class BaseSoC(SoCCore):
             platform.request("user_led", 1).eq(counter[27] & platform.request("user_btn", 1))
         ]
 
-        # usb
-        self.comb += platform.request("usb_fifo_rst").eq(1)
+        # usb,
         usb_pads = platform.request("usb_fifo")
-        self.comb += usb_pads.be.eq(0xf)
+        self.comb += [
+            usb_pads.rst.eq(1),
+            usb_pads.be.eq(0xf)
+        ]
 
         self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, 100*1000000)
+        self.submodules.usb_core = USBCore(self.usb_phy, clk_freq)
         self.platform.add_period_constraint(clk100, 10.0)
 
-        self.submodules.usb_depacketizer = USBDepacketizer(clk_freq)
-        self.comb += [
-            self.usb_phy.source.connect(self.usb_depacketizer.sink),
-            self.usb_depacketizer.source.ready.eq(1)
-        ]
-
-        self.submodules.usb_streamer = USBStreamer()
-        self.submodules.usb_packetizer = USBPacketizer()
-        self.comb += [
-            self.usb_streamer.source.connect(self.usb_packetizer.sink),
-            self.usb_packetizer.source.connect(self.usb_phy.sink)
-        ]
+        self.submodules.etherbone = Etherbone(self.usb_core, 0)
+        self.add_wb_master(self.etherbone.master.bus)
 
         # analyzer
         analyzer_signals = [
@@ -109,27 +104,9 @@ class BaseSoC(SoCCore):
             self.usb_phy.source.ready,
             self.usb_phy.source.data,
 
-            self.usb_depacketizer.source.valid,
-            self.usb_depacketizer.source.ready,
-            self.usb_depacketizer.source.dst,
-            self.usb_depacketizer.source.length,
-            self.usb_depacketizer.source.data,
-            self.usb_depacketizer.source.error,
-        ]
-
-        analyzer_signals = [
-            self.usb_streamer.trig.re,
-
-            self.usb_packetizer.sink.valid,
-            self.usb_packetizer.sink.ready,
-            self.usb_packetizer.sink.dst,
-            self.usb_packetizer.sink.length,
-            self.usb_packetizer.sink.data,
-            self.usb_packetizer.sink.error,
-
             self.usb_phy.sink.valid,
             self.usb_phy.sink.ready,
-            self.usb_phy.sink.data,
+            self.usb_phy.sink.data
         ]
 
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)

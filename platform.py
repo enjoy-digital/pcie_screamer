@@ -62,8 +62,8 @@ _io = [
     ),
 
     ("usb_fifo_clock", 0, Pins("D17"), IOStandard("LVCMOS33")),
-    ("usb_fifo_rst", 0, Pins("K22"), IOStandard("LVCMOS33")),
     ("usb_fifo", 0,
+        Subsignal("rst", Pins("K22")),
         Subsignal("data", Pins("A16 F14 A15 F13 A14 E14 A13 E13 B13 C15 C13 C14 B16 E17 B15 F16",
                                "A20 E18 B20 F18 D19 D21 E19 E21 A21 B21 A19 A18 F20 F19 B18 B17")),
         Subsignal("be", Pins("K16 L16 G20 H20")),
