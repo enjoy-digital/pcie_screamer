@@ -126,8 +126,6 @@ class USBDepacketizer(Module):
         self.sink = sink = stream.Endpoint(phy_description(32))
         self.source = source = stream.Endpoint(user_description(32))
 
-        self.debug = Signal(8)
-
         # # #
 
         # Packet description
@@ -161,8 +159,7 @@ class USBDepacketizer(Module):
             If((sink.data == 0x5aa55aa5) & sink.valid,
                    NextState("RECEIVE_HEADER")
             ),
-            header_pack.source.ready.eq(1),
-            self.debug.eq(0),
+            header_pack.source.ready.eq(1)
         )
 
         self.submodules.timer = WaitTimer(clk_freq*timeout)
@@ -177,8 +174,7 @@ class USBDepacketizer(Module):
                 NextState("COPY")
             ).Else(
                 sink.ready.eq(1)
-            ),
-            self.debug.eq(1),
+            )
         )
 
         self.comb += header_pack.reset.eq(self.timer.done)
@@ -193,8 +189,7 @@ class USBDepacketizer(Module):
             sink.ready.eq(source.ready),
             If((source.valid & source.ready & last) | self.timer.done,
                 NextState("IDLE")
-            ),
-            self.debug.eq(2)
+            )
         )
 
         self.sync += \

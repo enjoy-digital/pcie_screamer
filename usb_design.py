@@ -115,8 +115,6 @@ class BaseSoC(SoCCore):
             self.usb_depacketizer.source.length,
             self.usb_depacketizer.source.data,
             self.usb_depacketizer.source.error,
-
-            self.usb_depacketizer.debug
         ]
 
         analyzer_signals = [
