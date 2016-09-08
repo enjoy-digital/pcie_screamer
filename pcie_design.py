@@ -75,7 +75,7 @@ class PCIeDMASoC(SoCCore):
         self.submodules.crg = _CRG(platform)
 
         # PCIe endpoint
-        self.submodules.pcie_phy = S7PCIEPHY(platform, link_width=2)
+        self.submodules.pcie_phy = S7PCIEPHY(platform, link_width=1)
         self.submodules.pcie_endpoint = LitePCIeEndpoint(self.pcie_phy, with_reordering=True)
 
         # PCIe Wishbone bridge
@@ -121,7 +121,7 @@ def main():
     vns = builder.build()
 
     csr_header = cpu_interface.get_csr_header(soc.get_csr_regions(), soc.get_constants())
-    write_to_file(os.path.join("software", "linux", "kernel", "csr.h"), csr_header)
+    write_to_file(os.path.join("software", "pcie", "kernel", "csr.h"), csr_header)
 
 if __name__ == "__main__":
     main()
