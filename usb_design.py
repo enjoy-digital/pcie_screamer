@@ -17,6 +17,7 @@ from litex.soc.cores.uart.bridge import UARTWishboneBridge
 from gateware.ft245 import phy_description, FT245PHYSynchronous
 from gateware.usb import USBCore
 from gateware.etherbone import Etherbone
+from gateware.tlp import TLP
 
 from litescope import LiteScopeAnalyzer
 
@@ -28,7 +29,8 @@ class BaseSoC(SoCCore):
     csr_map.update(SoCCore.csr_map)
 
     usb_map = {
-        "wishbone": 0
+        "wishbone": 0,
+        "tlp":      1,
     }
 
     def __init__(self, platform):
@@ -67,6 +69,10 @@ class BaseSoC(SoCCore):
         # usb <--> wishbone
         self.submodules.etherbone = Etherbone(self.usb_core, self.usb_map["wishbone"])
         self.add_wb_master(self.etherbone.master.bus)
+
+        # usb <--> tlp
+        self.submodules.tlp = TLP(self.usb_core, self.usb_map["tlp"])
+        self.comb += self.tlp.receiver.source.connect(self.tlp.sender.sink) # loopback
 
         # analyzer
         analyzer_signals = [
