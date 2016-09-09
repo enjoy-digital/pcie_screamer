@@ -1,7 +1,3 @@
--test pcie_design with software (seems to be OK for CSR, need to test DMA)
--add wishbone bridge to USB and simulate
--add litescope to wishbone bridge
--test wishbone bridge on hardware (with integrated litescope)
 -add mux to connect PCIe TLPs to USB packetizer/depacketizer
 -test TLPs reception/injection on hardware
--almost done :) 
+-almost done :)
