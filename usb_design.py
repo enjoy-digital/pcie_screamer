@@ -38,7 +38,8 @@ class BaseSoC(SoCCore):
             csr_data_width=32,
             with_uart=False,
             ident="USB loopback example design",
-            with_timer=False
+            with_timer=False,
+            integrated_main_ram_size=0x1000
         )
         self.add_cpu_or_bridge(UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=115200))
         self.add_wb_master(self.cpu_or_bridge.wishbone)
@@ -69,13 +70,13 @@ class BaseSoC(SoCCore):
 
         # analyzer
         analyzer_signals = [
-            self.usb_phy.source.valid,
-            self.usb_phy.source.ready,
-            self.usb_phy.source.data,
+            #self.usb_phy.source.valid,
+            #self.usb_phy.source.ready,
+            #self.usb_phy.source.data,
 
-            self.usb_phy.sink.valid,
-            self.usb_phy.sink.ready,
-            self.usb_phy.sink.data,
+            #self.usb_phy.sink.valid,
+            #self.usb_phy.sink.ready,
+            #self.usb_phy.sink.data,
 
             self.etherbone.packet.rx.sink.valid,
             self.etherbone.packet.rx.sink.ready,
@@ -84,24 +85,27 @@ class BaseSoC(SoCCore):
             self.etherbone.packet.rx.sink.data,
             self.etherbone.packet.rx.sink.last,
 
-            self.etherbone.packet.tx.source.valid,
-            self.etherbone.packet.tx.source.ready,
-            self.etherbone.packet.tx.source.length,
-            self.etherbone.packet.tx.source.dst,
-            self.etherbone.packet.tx.source.data,
-            self.etherbone.packet.tx.source.last,
+            #self.etherbone.packet.tx.source.valid,
+            #self.etherbone.packet.tx.source.ready,
+            #self.etherbone.packet.tx.source.length,
+            #self.etherbone.packet.tx.source.dst,
+            #self.etherbone.packet.tx.source.data,
+            #self.etherbone.packet.tx.source.last,
 
-            #self.etherbone.master.bus.adr,
-            #self.etherbone.master.bus.dat_w,
-            #self.etherbone.master.bus.dat_r,
-            #self.etherbone.master.bus.sel,
-            #self.etherbone.master.bus.cyc,
-            #self.etherbone.master.bus.stb,
-            #self.etherbone.master.bus.ack,
-            #self.etherbone.master.bus.we,
-            #self.etherbone.master.bus.cti,
-            #self.etherbone.master.bus.bte,
-            #self.etherbone.master.bus.err,
+            self.etherbone.master.bus.adr,
+            self.etherbone.master.bus.dat_w,
+            self.etherbone.master.bus.dat_r,
+            self.etherbone.master.bus.sel,
+            self.etherbone.master.bus.cyc,
+            self.etherbone.master.bus.stb,
+            self.etherbone.master.bus.ack,
+            self.etherbone.master.bus.we,
+            self.etherbone.master.bus.cti,
+            self.etherbone.master.bus.bte,
+            self.etherbone.master.bus.err,
+
+            self.etherbone.packet.rx.debug,
+            self.etherbone.packet.rx.depacketizer.source.magic,
         ]
 
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)

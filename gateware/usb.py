@@ -198,7 +198,7 @@ class USBDepacketizer(Module):
             ).Elif(source.valid & source.ready,
                 cnt.eq(cnt + 1)
             )
-        self.comb += last.eq(cnt == source.length - 1)
+        self.comb += last.eq(cnt == source.length[2:] - 1)
 
 
 class USBCrossbar(Module):

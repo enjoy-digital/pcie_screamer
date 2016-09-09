@@ -165,11 +165,14 @@ class EtherbonePacketRX(Module):
 
         # # #
 
+        self.debug = Signal(8)
+
         self.submodules.depacketizer = depacketizer = EtherbonePacketDepacketizer()
         self.comb += sink.connect(depacketizer.sink)
 
         self.submodules.fsm = fsm = FSM(reset_state="IDLE")
         fsm.act("IDLE",
+            self.debug.eq(0),
             depacketizer.source.ready.eq(1),
             If(depacketizer.source.valid,
                 depacketizer.source.ready.eq(0),
@@ -182,6 +185,7 @@ class EtherbonePacketRX(Module):
             (depacketizer.source.magic == etherbone_magic)
         )
         fsm.act("CHECK",
+            self.debug.eq(1),
             If(valid,
                 NextState("PRESENT")
             ).Else(
@@ -200,6 +204,7 @@ class EtherbonePacketRX(Module):
             source.length.eq(sink.length - etherbone_packet_header.length)
         ]
         fsm.act("PRESENT",
+            self.debug.eq(2),
             source.valid.eq(depacketizer.source.valid),
             depacketizer.source.ready.eq(source.ready),
             If(source.valid & source.last & source.ready,
@@ -207,6 +212,7 @@ class EtherbonePacketRX(Module):
             )
         )
         fsm.act("DROP",
+            self.debug.eq(3),
             depacketizer.source.ready.eq(1),
             If(depacketizer.source.valid &
                depacketizer.source.last &
