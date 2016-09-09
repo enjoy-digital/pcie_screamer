@@ -251,9 +251,3 @@ class USBCore(Module):
         # graph
         self.submodules.rx_pipeline = stream.Pipeline(*rx_pipeline)
         self.submodules.tx_pipeline = stream.Pipeline(*reversed(tx_pipeline))
-
-
-class USBWishboneBridge(WishboneStreamingBridge):
-    def __init__(self, port, clk_freq):
-        WishboneStreamingBridge.__init__(self, port, clk_freq)
-        self.comb += port.sink.dst.eq(port.tag)
