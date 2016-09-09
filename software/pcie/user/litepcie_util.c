@@ -202,14 +202,17 @@ void dma_loopback_test(void)
 void dump_version(void)
 {
     LitePCIeState *s;
+    int i;
 
     s = litepcie_open(LITEPCIE_FILENAME);
     if (!s) {
         fprintf(stderr, "Could not init driver\n");
         exit(1);
     }
-    //printf("sysid=0x%x\n", litepcie_readl(s, CSR_IDENTIFIER_SYSID_ADDR));
-    //printf("frequency=%d\n", litepcie_readl(s, CSR_IDENTIFIER_FREQUENCY_ADDR));
+
+    for(i=0; i<30; i++)
+        printf("%c", litepcie_readl(s, IDENTIFIER_MEM_BASE + 4*(i+1)));
+    printf("\n");
 
     litepcie_close(s);
 }
