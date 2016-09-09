@@ -114,6 +114,8 @@ class EtherbonePacketTX(Module):
         self.sink = sink = stream.Endpoint(eth_etherbone_packet_user_description(32))
         self.source = source = stream.Endpoint(user_description(32))
 
+        self.debug = Signal(8)
+
         # # #
 
         self.submodules.packetizer = packetizer = EtherbonePacketPacketizer()
@@ -134,6 +136,7 @@ class EtherbonePacketTX(Module):
         ]
         self.submodules.fsm = fsm = FSM(reset_state="IDLE")
         fsm.act("IDLE",
+            self.debug.eq(0),
             packetizer.source.ready.eq(1),
             If(packetizer.source.valid,
                 packetizer.source.ready.eq(0),
@@ -141,6 +144,7 @@ class EtherbonePacketTX(Module):
             )
         )
         fsm.act("SEND",
+            self.debug.eq(1),
             packetizer.source.connect(source),
             source.dst.eq(identifier),
             source.length.eq(sink.length + etherbone_packet_header.length),
