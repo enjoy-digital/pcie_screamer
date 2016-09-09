@@ -114,8 +114,6 @@ class EtherbonePacketTX(Module):
         self.sink = sink = stream.Endpoint(eth_etherbone_packet_user_description(32))
         self.source = source = stream.Endpoint(user_description(32))
 
-        self.debug = Signal(8)
-
         # # #
 
         self.submodules.packetizer = packetizer = EtherbonePacketPacketizer()
@@ -136,7 +134,6 @@ class EtherbonePacketTX(Module):
         ]
         self.submodules.fsm = fsm = FSM(reset_state="IDLE")
         fsm.act("IDLE",
-            self.debug.eq(0),
             packetizer.source.ready.eq(1),
             If(packetizer.source.valid,
                 packetizer.source.ready.eq(0),
@@ -144,7 +141,6 @@ class EtherbonePacketTX(Module):
             )
         )
         fsm.act("SEND",
-            self.debug.eq(1),
             packetizer.source.connect(source),
             source.dst.eq(identifier),
             source.length.eq(sink.length + etherbone_packet_header.length),
@@ -169,14 +165,11 @@ class EtherbonePacketRX(Module):
 
         # # #
 
-        self.debug = Signal(8)
-
         self.submodules.depacketizer = depacketizer = EtherbonePacketDepacketizer()
         self.comb += sink.connect(depacketizer.sink)
 
         self.submodules.fsm = fsm = FSM(reset_state="IDLE")
         fsm.act("IDLE",
-            self.debug.eq(0),
             depacketizer.source.ready.eq(1),
             If(depacketizer.source.valid,
                 depacketizer.source.ready.eq(0),
@@ -189,7 +182,6 @@ class EtherbonePacketRX(Module):
             (depacketizer.source.magic == etherbone_magic)
         )
         fsm.act("CHECK",
-            self.debug.eq(1),
             If(valid,
                 NextState("PRESENT")
             ).Else(
@@ -208,7 +200,6 @@ class EtherbonePacketRX(Module):
             source.length.eq(sink.length - etherbone_packet_header.length)
         ]
         fsm.act("PRESENT",
-            self.debug.eq(2),
             source.valid.eq(depacketizer.source.valid),
             depacketizer.source.ready.eq(source.ready),
             If(source.valid & source.last & source.ready,
@@ -216,7 +207,6 @@ class EtherbonePacketRX(Module):
             )
         )
         fsm.act("DROP",
-            self.debug.eq(3),
             depacketizer.source.ready.eq(1),
             If(depacketizer.source.valid &
                depacketizer.source.last &

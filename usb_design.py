@@ -72,29 +72,15 @@ class BaseSoC(SoCCore):
         analyzer_signals = [
             self.usb_phy.source.valid,
             self.usb_phy.source.ready,
-            #self.usb_phy.source.data,
+            self.usb_phy.source.data,
 
             self.usb_phy.sink.valid,
             self.usb_phy.sink.ready,
-            #self.usb_phy.sink.data,
+            self.usb_phy.sink.data,
 
-            self.etherbone.packet.rx.sink.valid,
-            self.etherbone.packet.rx.sink.ready,
-            self.etherbone.packet.rx.sink.length,
-            self.etherbone.packet.rx.sink.dst,
-            self.etherbone.packet.rx.sink.data,
-            self.etherbone.packet.rx.sink.last,
-
-            self.etherbone.packet.tx.source.valid,
-            self.etherbone.packet.tx.source.ready,
-            self.etherbone.packet.tx.source.length,
-            self.etherbone.packet.tx.source.dst,
-            self.etherbone.packet.tx.source.data,
-            self.etherbone.packet.tx.source.last,
-
-            #self.etherbone.master.bus.adr,
-            #self.etherbone.master.bus.dat_w,
-            #self.etherbone.master.bus.dat_r,
+            self.etherbone.master.bus.adr,
+            self.etherbone.master.bus.dat_w,
+            self.etherbone.master.bus.dat_r,
             self.etherbone.master.bus.sel,
             self.etherbone.master.bus.cyc,
             self.etherbone.master.bus.stb,
@@ -103,10 +89,6 @@ class BaseSoC(SoCCore):
             self.etherbone.master.bus.cti,
             self.etherbone.master.bus.bte,
             self.etherbone.master.bus.err,
-
-            self.etherbone.packet.rx.debug,
-            self.etherbone.packet.tx.debug,
-
         ]
 
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)
