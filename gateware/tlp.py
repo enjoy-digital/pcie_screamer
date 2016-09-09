@@ -1,21 +1,25 @@
 from litex.gen import *
 
 from litex.soc.interconnect import stream
+from litex.soc.interconnect.stream import StrideConverter
 
 from litepcie.common import phy_layout as tlp_description
 from gateware.usb import user_description as usb_description
 
 
 class TLPSender(Module):
-    # TODO add 64 to 32 bits converter
     def __init__(self, identifier, fifo_depth=512):
         self.sink = sink = stream.Endpoint(tlp_description(64))
         self.source = source = stream.Endpoint(usb_description(32))
 
         # # #
 
-        self.submodules.fifo = fifo = stream.SyncFIFO(tlp_description(64), fifo_depth)
-        self.comb += sink.connect(fifo.sink)
+        self.submodules.converter = converter = StrideConverter(tlp_description(64), tlp_description(32))
+        self.submodules.fifo = fifo = stream.SyncFIFO(tlp_description(32), fifo_depth)
+        self.comb += [
+                sink.connect(converter.sink),
+                converter.source.connect(fifo.sink)
+        ]
 
         level = Signal(max=fifo_depth)
         level_update = Signal()
@@ -64,20 +68,23 @@ class TLPSender(Module):
 
 
 class TLPReceiver(Module):
-    # TODO add 32 to 64 bits converter
     def __init__(self):
         self.sink = sink = stream.Endpoint(usb_description(32))
         self.source = source = stream.Endpoint(tlp_description(64))
 
         # # #
 
+        self.submodules.converter = converter = StrideConverter(tlp_description(32), tlp_description(64))
+
         self.comb += [
-            self.source.valid.eq(self.sink.valid),
-            self.source.last.eq(self.sink.last),
-            self.sink.ready.eq(self.source.ready),
-            self.source.dat.eq(self.sink.data),
-            self.source.be.eq(2**(len(self.source.dat)//8)-1),
+            converter.sink.valid.eq(self.sink.valid),
+            converter.sink.last.eq(self.sink.last),
+            self.sink.ready.eq(converter.sink.ready),
+            converter.sink.dat.eq(self.sink.data),
+            converter.sink.be.eq(2**(len(self.source.dat)//8)-1),
+            converter.source.connect(source)
         ]
+
 
 class TLP(Module):
     def __init__(self, usb_core, identifier):
