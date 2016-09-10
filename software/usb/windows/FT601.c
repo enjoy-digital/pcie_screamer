@@ -97,73 +97,6 @@ static void get_version(void)
                         (uint8_t)(dwVersion >> 16), dwVersion & 0xFFFF);
 }
 
-#define BUFFER_SIZE 512
-int loopback()
-{
-  int i;
-  FT_STATUS ftStatus = FT_OK;
-  FT_HANDLE ftHandle;
-  char bResult = TRUE;
-  
-  ftStatus = FT_Create(0, FT_OPEN_BY_INDEX, &ftHandle);
-  if (FT_FAILED(ftStatus))
-    {
-      return FALSE;
-    }
-  
-  DWORD dwNumIterations = 1;
-  for (i=0; i<dwNumIterations; i++)
-    {
-      char *acWriteBuf;
-      acWriteBuf = malloc(BUFFER_SIZE);
-      memset(acWriteBuf, 0xff, BUFFER_SIZE);
-      unsigned long ulBytesWritten = 0;
-      printf("\tWriting %d bytes!\n", BUFFER_SIZE);
-      ftStatus = FT_WritePipe(ftHandle, 0x02, acWriteBuf, BUFFER_SIZE, &ulBytesWritten, NULL);
-      printf("\tWriting %d bytes DONE!\n", ulBytesWritten);
-      if (FT_FAILED(ftStatus))
-        {
-	  bResult = FALSE;
-	  goto exit;
-        }
-      if (ulBytesWritten != BUFFER_SIZE)
-        {
-	  bResult = FALSE;
-	  goto exit;
-        }
-      
-      
-      char *acReadBuf;
-      acReadBuf = malloc(BUFFER_SIZE);
-      unsigned long ulBytesRead = 0;
-      printf("\tReading %d bytes!\n", BUFFER_SIZE);
-      ftStatus = FT_ReadPipe(ftHandle, 0x82, acReadBuf, BUFFER_SIZE, &ulBytesRead, NULL);
-      printf("\tReading %d bytes DONE!\n", ulBytesRead);
-      if (FT_FAILED(ftStatus))
-        {
-	  bResult = FALSE;
-	  goto exit;
-        }
-      if (ulBytesRead != BUFFER_SIZE)
-        {
-	  bResult = FALSE;
-	  goto exit;
-        }
-      
-      for(i = 0; i < ulBytesRead; i++)
-	printf("%02x ", acReadBuf[i]);
-      if (memcmp(acWriteBuf, acReadBuf, ulBytesRead))
-        {
-	  bResult = FALSE;
-	  goto exit;
-        }
-    }
-  
- exit:
-  FT_Close(ftHandle);
-  return bResult;
-
-}
 
 
 
@@ -389,16 +322,52 @@ int show_config(FT_60XCONFIGURATION *a_pConfigurationData, int a_bRead)
 }
 
 
-int main(int argc,char *argv[])
-{
 
+struct device {
+  FT_HANDLE ftHandle;
+};
+
+int FT601_Open(struct device *dev)
+{
   int ret;
+  FT_STATUS ftStatus = FT_OK;
+
 
   ret = modify_config();
-  printf("ret: %d\n", ret);
+  ftStatus = FT_Create(0, FT_OPEN_BY_INDEX, &dev->ftHandle);
+  if (FT_FAILED(ftStatus))
+    {
+      return FALSE;
+    }
+  return TRUE;
+}
 
-  ret = loopback();
-  printf("ret: %d\n", ret);
+int FT601_Close(struct device *dev)
+{
+  FT_Close(dev->ftHandle);
+  return TRUE;
+  
+}
 
-	return 0;
+
+int FT601_Read(struct device *dev, void *buf, size_t len)
+{
+  
+  FT_STATUS ftStatus = FT_OK;
+  unsigned long ulBytesRead = 0;
+  
+  ftStatus = FT_ReadPipe(dev->ftHandle, 0x82, buf, len, &ulBytesRead, NULL);
+  printf("status wr %d\n", ftStatus);
+  return ulBytesRead;
+}
+
+
+int FT601_Write(struct device *dev, void *buf, size_t len)
+{
+  FT_STATUS ftStatus = FT_OK;
+  unsigned long ulBytesWritten = 0;
+  
+  ftStatus = FT_WritePipe(dev->ftHandle, 0x02, buf, len, &ulBytesWritten, NULL);
+  printf("status wr %d\n", ftStatus);
+  return ulBytesWritten;
 }
