@@ -84,9 +84,9 @@ class BaseSoC(SoCCore):
             self.usb_phy.sink.ready,
             self.usb_phy.sink.data,
 
-            self.etherbone.master.bus.adr,
-            self.etherbone.master.bus.dat_w,
-            self.etherbone.master.bus.dat_r,
+            #self.etherbone.master.bus.adr,
+            #self.etherbone.master.bus.dat_w,
+            #self.etherbone.master.bus.dat_r,
             self.etherbone.master.bus.sel,
             self.etherbone.master.bus.cyc,
             self.etherbone.master.bus.stb,

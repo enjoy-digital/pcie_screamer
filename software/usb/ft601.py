@@ -11,7 +11,7 @@ class FT601_Device(ctypes.Structure):
     _fields_ = [('_1', ctypes.c_void_p)]
 
 
-pFTDI_Device = ctypes.POINTER(FTDI_Device)
+pFTDI_Device = ctypes.POINTER(FT601_Device)
 
 # FT601_Open
 FT601_Open = libftdicom.FT601_Open
@@ -56,7 +56,7 @@ class FT601Device:
 
     def close(self):
         return FT601_Close(self._dev)
-    
+
     def write(self, buf):
         assert isinstance(buf, bytes)
         return FT601_Write(self._dev, buf, len(buf))
@@ -69,3 +69,17 @@ class FT601Device:
             return buf
         else:
             return b''
+
+ft601 = FT601Device()
+ft601.open()
+ft601.write((0x5aa55aa5).to_bytes(4, byteorder='little') +
+            (0x00000000).to_bytes(4, byteorder='little') +
+            (0x00000014).to_bytes(4, byteorder='little') +
+            (0x4e6f1044).to_bytes(4, byteorder='big') +
+            (0x00000000).to_bytes(4, byteorder='big') +
+            (0x00f00001).to_bytes(4, byteorder='big') +
+            (0x00000000).to_bytes(4, byteorder='big') +
+            (0x40000000).to_bytes(4, byteorder='big'))
+for d in ft601.read(32):
+    print("{:02x}".format(d))
+ft601.close()

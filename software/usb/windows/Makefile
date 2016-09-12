@@ -1,5 +1,5 @@
 
-CC=i686-w64-mingw32-gcc-posix
+CC=gcc
 CFLAGS_DLL =-Wall -O0 -g -shared -Wl,--subsystem,windows -DDLL
 LIBS= FTD3XXLibrary/Win32/FTD3XX.lib
 
