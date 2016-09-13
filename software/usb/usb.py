@@ -1,41 +1,42 @@
 from ft601 import FT601Device
 
 
-class ProtocolError(Exception):
-    pass
+class Etherbone:
+    def __init__(self, device):
+        self.device = device
+
+    def write(self, addr, data):
+        self.device.write(
+            (0x5aa55aa5).to_bytes(4, byteorder="little") +
+            (0x00000000).to_bytes(4, byteorder="little") +
+            (0x00000014).to_bytes(4, byteorder="little") +
+            (0x4e6f1044).to_bytes(4, byteorder="big") +
+            (0x00000000).to_bytes(4, byteorder="big") +
+            (0x000f0100).to_bytes(4, byteorder="big") +
+            (addr).to_bytes(4, byteorder="big") +
+            (data).to_bytes(4, byteorder="big")
+        )
+
+    def read(self, addr):
+        self.device.write(
+            (0x5aa55aa5).to_bytes(4, byteorder="little") +
+            (0x00000000).to_bytes(4, byteorder="little") +
+            (0x00000014).to_bytes(4, byteorder="little") +
+            (0x4e6f1044).to_bytes(4, byteorder="big") +
+            (0x00000000).to_bytes(4, byteorder="big") +
+            (0x00f00001).to_bytes(4, byteorder="big") +
+            (0x00000000).to_bytes(4, byteorder="big") +
+            (addr).to_bytes(4, byteorder="big")
+        )
+        r = self.device.read(36)
+        assert len(r) == 36
+        return int.from_bytes(r[-4:],  byteorder="big")
 
 
-class TimeoutError(Exception):
-    pass
-
-
-INCOMPLETE = -1
-UNMATCHED = 0
-class BaseService:
-    def match_identifier(self, byt):
-        r = True
-        r = r and (byt[0] == 0x5a)
-        r = r and (byt[1] == 0xa5)
-        r = r and (byt[2] == 0x5a)
-        r = r and (byt[3] == 0xa5)
-        r = r and (byt[4] == self.tag)
-        return r
-
-    def get_needed_size_for_identifier(self):
-        return self.NEEDED_FOR_SIZE
-
-    def present_bytes(self, b):
-        if len(b) < self.get_needed_size_for_identifier():
-            return INCOMPLETE
-
-        if not self.match_identifier(b):
-            return UNMATCHED
-
-        size = self.get_packet_size(b)
-
-        if len(b) < size:
-            return INCOMPLETE
-
-        self.consume(b[:size])
-
-        return size
+if __name__ == '__main__':
+    ft601 = FT601Device()
+    ft601.open()
+    etherbone = Etherbone(ft601)
+    etherbone.write(0x40000000, 0x12345678)
+    print("%08x" %etherbone.read(0x40000000))
+    ft601.close()

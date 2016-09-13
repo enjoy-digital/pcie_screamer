@@ -69,17 +69,3 @@ class FT601Device:
             return buf
         else:
             return b''
-
-ft601 = FT601Device()
-ft601.open()
-ft601.write((0x5aa55aa5).to_bytes(4, byteorder='little') +
-            (0x00000000).to_bytes(4, byteorder='little') +
-            (0x00000014).to_bytes(4, byteorder='little') +
-            (0x4e6f1044).to_bytes(4, byteorder='big') +
-            (0x00000000).to_bytes(4, byteorder='big') +
-            (0x00f00001).to_bytes(4, byteorder='big') +
-            (0x00000000).to_bytes(4, byteorder='big') +
-            (0x40000000).to_bytes(4, byteorder='big'))
-for d in ft601.read(32):
-    print("{:02x}".format(d))
-ft601.close()
