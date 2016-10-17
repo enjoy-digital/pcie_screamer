@@ -17,6 +17,8 @@ int fake_printf( const char * format, ... )
     return 0;
 }
 
+//#define DEBUG
+
 #ifdef DEBUG
 #define my_printf printf
 #else
@@ -32,23 +34,23 @@ int save_config()
 {
   FT_STATUS ftStatus = FT_OK;
   FT_HANDLE ftHandle;
-  
+
   ftStatus = FT_Create(0, FT_OPEN_BY_INDEX, &ftHandle);
   if (FT_FAILED(ftStatus))
     {
       return FALSE;
     }
-  
+
   ftStatus = FT_GetChipConfiguration(ftHandle, &oSaveConfigurationData);
   if (FT_FAILED(ftStatus))
     {
       FT_Close(ftHandle);
       return FALSE;
     }
-  
+
   FT_Close(ftHandle);
   ftHandle = NULL;
-  
+
   return TRUE;
 }
 
@@ -56,23 +58,23 @@ int revert_config()
 {
   FT_STATUS ftStatus = FT_OK;
   FT_HANDLE ftHandle;
-  
+
   ftStatus = FT_Create(0, FT_OPEN_BY_INDEX, &ftHandle);
   if (FT_FAILED(ftStatus))
     {
       return FALSE;
     }
-  
+
   ftStatus = FT_SetChipConfiguration(ftHandle, &oSaveConfigurationData);
   if (FT_FAILED(ftStatus))
     {
       FT_Close(ftHandle);
       return FALSE;
     }
-  
+
   FT_Close(ftHandle);
   ftHandle = NULL;
-  
+
   return TRUE;
 }
 
@@ -80,7 +82,7 @@ int modify_config()
 {
   FT_STATUS ftStatus = FT_OK;
   FT_HANDLE ftHandle;
-  
+
   ftStatus = FT_Create(0, FT_OPEN_BY_INDEX, &ftHandle);
   if (FT_FAILED(ftStatus))
     {
@@ -101,7 +103,7 @@ int modify_config()
 
   //show_config(&oldconfig,1);
   memcpy(&oConfigurationData, &oldconfig, sizeof(oConfigurationData));
-  
+
   oConfigurationData.FIFOMode = CONFIGURATION_FIFO_MODE_245;
   oConfigurationData.ChannelConfig = CONFIGURATION_CHANNEL_CONFIG_1;
 
@@ -130,7 +132,7 @@ int modify_config()
     } else {
       my_printf("Chip configuration was ok, don't need to change !\n");
     }
-    
+
   memset(&oConfigurationData, 0, sizeof(oConfigurationData));
   ftStatus = FT_GetChipConfiguration(ftHandle, &oConfigurationData);
   if (FT_FAILED(ftStatus))
@@ -147,16 +149,16 @@ int modify_config()
       FT_Close(ftHandle);
       return FALSE;
     }
-  
+
   if (oConfigurationData.FIFOMode != CONFIGURATION_FIFO_MODE_245 ||
       oConfigurationData.ChannelConfig != CONFIGURATION_CHANNEL_CONFIG_1 )
     {
       my_printf("Config is not ok\n");
-      
+
       FT_Close(ftHandle);
       return FALSE;
     }
-  
+
   FT_Close(ftHandle);
   return TRUE;
 }
@@ -307,7 +309,7 @@ int FT601_Read(struct device *dev, void *buf, size_t len)
 {
   FT_STATUS ftStatus = FT_OK;
   unsigned long ulBytesRead = 0;
-  
+
   ftStatus = FT_ReadPipe(dev->ftHandle, 0x82, buf, len, &ulBytesRead, NULL);
   my_printf("Status wr %d\n", ftStatus);
   return ulBytesRead;
@@ -317,7 +319,7 @@ int FT601_Write(struct device *dev, void *buf, size_t len)
 {
   FT_STATUS ftStatus = FT_OK;
   unsigned long ulBytesWritten = 0;
-  
+
   ftStatus = FT_WritePipe(dev->ftHandle, 0x02, buf, len, &ulBytesWritten, NULL);
   my_printf("Status wr %d\n", ftStatus);
   return ulBytesWritten;

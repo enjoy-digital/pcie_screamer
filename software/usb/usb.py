@@ -24,7 +24,7 @@ class Etherbone(CSRBuilder):
                 (addr + 4*i).to_bytes(4, byteorder="big")
             )
             r = self.device.read(36)
-            assert len(r) == 36
+            #assert len(r) == 36
             datas.append(int.from_bytes(r[-4:],  byteorder="big"))
         if self.debug:
             for i, data in enumerate(datas):
