@@ -45,8 +45,12 @@ class BaseSoC(SoCCore):
         )
         self.add_cpu_or_bridge(UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=115200))
         self.add_wb_master(self.cpu_or_bridge.wishbone)
-        clk100 = platform.request("usb_fifo_clock")
-        self.submodules.crg = CRG(clk100)
+        self.submodules.crg = CRG(platform.request("usb_fifo_clock"))
+        self.clock_domains.cd_usb = ClockDomain()
+        self.comb += [
+            self.cd_usb.clk.eq(ClockSignal()),
+            self.cd_usb.rst.eq(ResetSignal())
+        ]
 
         # led blink
         counter = Signal(32)
@@ -64,7 +68,7 @@ class BaseSoC(SoCCore):
         ]
         self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, 100*1000000)
         self.submodules.usb_core = USBCore(self.usb_phy, clk_freq)
-        self.platform.add_period_constraint(clk100, 10.0)
+        self.platform.add_period_constraint(self.cd_usb.clk, 10.0)
 
         # usb <--> wishbone
         self.submodules.etherbone = Etherbone(self.usb_core, self.usb_map["wishbone"])

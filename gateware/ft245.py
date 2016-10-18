@@ -37,12 +37,12 @@ class FT245PHYSynchronous(Module):
         dw = len(pads.data)
 
         # read fifo (FTDI --> SoC)
-        read_fifo = stream.SyncFIFO(phy_description(32), fifo_depth)
-        read_buffer = stream.SyncFIFO(phy_description(32), 4)
+        read_fifo = ClockDomainsRenamer({"write": "usb", "read": "sys"})(stream.AsyncFIFO(phy_description(32), fifo_depth))
+        read_buffer = ClockDomainsRenamer("usb")(stream.SyncFIFO(phy_description(32), 4))
         self.comb += read_buffer.source.connect(read_fifo.sink)
 
         # write fifo (SoC --> FTDI)
-        write_fifo = stream.SyncFIFO(phy_description(32), fifo_depth)
+        write_fifo = ClockDomainsRenamer({"write": "sys", "read": "usb"})(stream.AsyncFIFO(phy_description(32), fifo_depth))
 
         self.submodules += read_fifo, read_buffer, write_fifo
 
@@ -70,7 +70,7 @@ class FT245PHYSynchronous(Module):
         data_w_accepted = Signal(reset=1)
 
         fsm = FSM(reset_state="READ")
-        self.submodules += fsm
+        self.submodules += ClockDomainsRenamer("usb")(fsm)
 
         fsm.act("READ",
             read_time_en.eq(1),
@@ -107,7 +107,7 @@ class FT245PHYSynchronous(Module):
         pads.rd_n.reset = 1
         pads.wr_n.reset = 1
 
-        self.sync += [
+        self.sync.usb += [
             If(fsm.ongoing("READ"),
                 data_oe.eq(0),
 
