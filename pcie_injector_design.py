@@ -27,6 +27,8 @@ from gateware.usb import USBCore
 from gateware.etherbone import Etherbone
 from gateware.tlp import TLP
 
+from litescope import LiteScopeAnalyzer
+
 import cpu_interface
 
 
@@ -60,7 +62,8 @@ class PCIeInjectorSoC(SoCCore):
         "crg":      16,
         "pcie_phy": 17,
         "dma":      18,
-        "msi":      19
+        "msi":      19,
+        "analyzer": 20
     }
     csr_map.update(SoCCore.csr_map)
 
@@ -133,7 +136,14 @@ class PCIeInjectorSoC(SoCCore):
 
         # usb <--> tlp
         self.submodules.tlp = TLP(self.usb_core, self.usb_map["tlp"])
-        self.comb += self.tlp.receiver.source.connect(self.tlp.sender.sink) # loopback
+        self.comb += self.tlp.receiver.source.ready.eq(1)
+        self.comb += [
+            self.tlp.sender.sink.valid.eq(self.pcie_phy.source.valid &
+                                          self.pcie_phy.source.ready),
+            self.tlp.sender.sink.last.eq(self.pcie_phy.source.valid),
+            self.tlp.sender.sink.dat.eq(self.pcie_phy.source.dat),
+            self.tlp.sender.sink.be.eq(self.pcie_phy.source.be)
+        ]
 
         # led blink
         sys_counter = Signal(32)
@@ -144,6 +154,26 @@ class PCIeInjectorSoC(SoCCore):
         self.sync.usb += usb_counter.eq(usb_counter + 1)
         self.comb += platform.request("user_led", 1).eq(usb_counter[26])
 
+        # analyzer
+        analyzer_signals = [
+            self.tlp.sender.sink.valid,
+            self.tlp.sender.sink.ready,
+            self.tlp.sender.sink.last,
+            self.tlp.sender.sink.dat,
+            self.tlp.sender.sink.be,
+
+            self.tlp.sender.source.valid,
+            self.tlp.sender.source.ready,
+            self.tlp.sender.source.data,
+            self.tlp.sender.source.last,
+            self.tlp.sender.fifo.level,
+            self.tlp.sender.debug
+        ]
+
+        self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)
+
+    def do_exit(self, vns):
+        self.analyzer.export_csv(vns, "test/analyzer.csv")
 
 def main():
     parser = argparse.ArgumentParser(description="PCIe Injector LiteX SoC")
@@ -155,6 +185,7 @@ def main():
     soc = PCIeInjectorSoC(platform, **soc_core_argdict(args))
     builder = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
     vns = builder.build()
+    soc.do_exit(vns)
 
     csr_header = cpu_interface.get_csr_header(soc.get_csr_regions(), soc.get_constants())
     write_to_file(os.path.join("software", "pcie", "kernel", "csr.h"), csr_header)

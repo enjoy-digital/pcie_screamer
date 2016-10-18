@@ -12,7 +12,7 @@ FT_HANDLE ft_handle;
 #define FT_STREAM_HEADER_SIZE 12
 #define FT_STREAM_PORTS 256
 
-//#define DEBUG
+#define DEBUG
 
 struct ft_stream {
     short udp_port;
