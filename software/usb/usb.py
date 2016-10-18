@@ -54,11 +54,11 @@ if __name__ == '__main__':
 
     # test sram write/read
     for i in range(32):
-        etherbone.write(0x40000000 + 4*i, i)
-        print("%08x" %etherbone.read(0x40000000 + 4*i))
+        etherbone.write(0x10000000 + 4*i, i)
+        print("%08x" %etherbone.read(0x10000000 + 4*i))
 
     # get identifier
     identifier = ""
     for i in range(1, 32):
-        identifier += "%c" %etherbone.read(0xe0001800 + 4*i)
+        identifier += "%c" %etherbone.read(0x00001800 + 4*i)
     print(identifier)
