@@ -14,7 +14,8 @@ from litex.soc.integration.builder import *
 from litex.soc.interconnect import stream
 from litex.soc.cores.uart.bridge import UARTWishboneBridge
 
-from gateware.ft245 import phy_description, FT245PHYSynchronous
+from liteusb.phy.ft245 import phy_description, FT245PHYSynchronous
+
 from gateware.usb import USBCore
 from gateware.etherbone import Etherbone
 from gateware.tlp import TLP
