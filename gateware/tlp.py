@@ -23,7 +23,9 @@ class TLPSender(Module):
         self.comb += [
                 sink.connect(buf.sink),
                 buf.source.connect(converter.sink),
-                converter.source.connect(fifo.sink)
+                converter.source.connect(fifo.sink),
+                fifo.sink.valid.eq(converter.source.valid &
+                                   (converter.source.be == 0xf))
         ]
 
         level = Signal(max=fifo_depth)
