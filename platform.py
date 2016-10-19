@@ -101,5 +101,11 @@ class Platform(XilinxPlatform):
             raise ValueError("{} programmer is not supported"
                              .format(self.programmer))
 
+
     def do_finalize(self, fragment):
+        self.add_platform_command("""
+create_clock -name pcie_clk -period 10 [get_pins {{pcie_phy/pcie_support_i/pcie_i/inst/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtp_channel.gtpe2_channel_i/TXOUTCLK}}]
+""")
         XilinxPlatform.do_finalize(self, fragment)
+
+

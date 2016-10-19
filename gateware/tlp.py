@@ -12,14 +12,13 @@ class TLPSender(Module):
         self.sink = sink = stream.Endpoint(tlp_description(64))
         self.source = source = stream.Endpoint(usb_description(32))
 
-        self.debug = Signal(8)
-
         # # #
 
-        self.submodules.buf = buf = stream.SyncFIFO(tlp_description(64), 128)
-        self.submodules.converter = converter = StrideConverter(tlp_description(64),
-                                                                tlp_description(32))
-        self.submodules.fifo = fifo = stream.SyncFIFO(tlp_description(32), fifo_depth)
+        buf = stream.SyncFIFO(tlp_description(64), 128)
+        converter = StrideConverter(tlp_description(64),
+                                    tlp_description(32))
+        fifo = stream.SyncFIFO(tlp_description(32), fifo_depth)
+        self.submodules += buf, converter, fifo
         self.comb += [
                 sink.connect(buf.sink),
                 buf.source.connect(converter.sink),
@@ -44,7 +43,6 @@ class TLPSender(Module):
 
         self.submodules.fsm = fsm = FSM(reset_state="IDLE")
         fsm.act("IDLE",
-            self.debug.eq(1),
             If(fifo.source.valid,
                 level_update.eq(1),
                 counter_reset.eq(1),
@@ -52,7 +50,6 @@ class TLPSender(Module):
             )
         )
         fsm.act("SEND",
-            self.debug.eq(2),
             source.valid.eq(fifo.source.valid),
             If(level == 0,
                 source.last.eq(1),
@@ -83,14 +80,16 @@ class TLPReceiver(Module):
 
         # # #
 
-        self.submodules.converter = converter = StrideConverter(tlp_description(32), tlp_description(64))
+        converter = StrideConverter(tlp_description(32),
+                                    tlp_description(64))
+        self.submodules += converter
 
         self.comb += [
             converter.sink.valid.eq(self.sink.valid),
             converter.sink.last.eq(self.sink.last),
             self.sink.ready.eq(converter.sink.ready),
             converter.sink.dat.eq(self.sink.data),
-            converter.sink.be.eq(2**(len(self.source.dat)//8)-1),
+            converter.sink.be.eq(0xf),
             converter.source.connect(source)
         ]
 

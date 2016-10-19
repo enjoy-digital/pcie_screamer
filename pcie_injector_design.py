@@ -6,6 +6,7 @@ from litex.gen import *
 from litex.gen.genlib.io import CRG
 from litex.gen.genlib.resetsync import AsyncResetSynchronizer
 from litex.gen.genlib.misc import timeline
+from litex.gen.fhdl.specials import Keep
 from litex.build.tools import write_to_file
 
 import platform as pcie_injector
@@ -54,8 +55,6 @@ class _CRG(Module, AutoCSR):
         # usb clock domain (100MHz from fifo interface)
         self.comb += self.cd_usb.clk.eq(platform.request("usb_fifo_clock"))
         self.specials += AsyncResetSynchronizer(self.cd_usb, self.cd_clk125.rst | soft_rst)
-        platform.add_period_constraint(self.cd_usb.clk, 10.0)
-
 
 class PCIeInjectorSoC(SoCCore):
     csr_map = {
@@ -81,7 +80,7 @@ class PCIeInjectorSoC(SoCCore):
         "tlp":      1,
     }
 
-    def __init__(self, platform, with_uart_bridge=True):
+    def __init__(self, platform):
         clk_freq = 125*1000000
         SoCCore.__init__(self, platform, clk_freq,
             cpu_type=None,
@@ -95,31 +94,30 @@ class PCIeInjectorSoC(SoCCore):
 
         # pcie endpoint
         self.submodules.pcie_phy = S7PCIEPHY(platform, link_width=2)
-        self.submodules.pcie_endpoint = LitePCIeEndpoint(self.pcie_phy, with_reordering=True)
+        #self.submodules.pcie_endpoint = LitePCIeEndpoint(self.pcie_phy, with_reordering=True)
 
         # pcie wishbone bridge
-        self.add_cpu_or_bridge(LitePCIeWishboneBridge(self.pcie_endpoint, lambda a: 1))
-        self.add_wb_master(self.cpu_or_bridge.wishbone)
+        #self.add_cpu_or_bridge(LitePCIeWishboneBridge(self.pcie_endpoint, lambda a: 1))
+        #self.add_wb_master(self.cpu_or_bridge.wishbone)
 
         # pcie dma
-        self.submodules.dma = LitePCIeDMA(self.pcie_phy, self.pcie_endpoint, with_loopback=True)
-        self.dma.source.connect(self.dma.sink)
+        #self.submodules.dma = LitePCIeDMA(self.pcie_phy, self.pcie_endpoint, with_loopback=True)
+        #self.dma.source.connect(self.dma.sink)
 
         # msi
-        self.submodules.msi = LitePCIeMSI()
-        self.comb += self.msi.source.connect(self.pcie_phy.interrupt)
-        self.interrupts = {
-            "dma_writer":    self.dma.writer.irq,
-            "dma_reader":    self.dma.reader.irq
-        }
-        for k, v in sorted(self.interrupts.items()):
-            self.comb += self.msi.irqs[self.interrupt_map[k]].eq(v)
+        #self.submodules.msi = LitePCIeMSI()
+        #self.comb += self.msi.source.connect(self.pcie_phy.interrupt)
+        #self.interrupts = {
+        #    "dma_writer":    self.dma.writer.irq,
+        #    "dma_reader":    self.dma.reader.irq
+        #}
+        #for k, v in sorted(self.interrupts.items()):
+        #    self.comb += self.msi.irqs[self.interrupt_map[k]].eq(v)
 
 
         # uart bridge
-        if with_uart_bridge:
-            self.submodules.uart_bridge = UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=115200)
-            self.add_wb_master(self.uart_bridge.wishbone)
+        self.add_cpu_or_bridge(UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=115200))
+        self.add_wb_master(self.cpu_or_bridge.wishbone)
 
         # usb core
         usb_pads = platform.request("usb_fifo")
@@ -136,23 +134,28 @@ class PCIeInjectorSoC(SoCCore):
 
         # usb <--> tlp
         self.submodules.tlp = TLP(self.usb_core, self.usb_map["tlp"])
-        self.comb += self.tlp.receiver.source.ready.eq(1)
+        #self.comb += self.tlp.receiver.source.ready.eq(1)
+        #self.comb += [
+        #    # host --> fpga
+        #    If(self.pcie_phy.source.valid &
+        #       self.pcie_phy.source.ready,
+        #        self.tlp.sender.sink.valid.eq(1),
+        #        self.tlp.sender.sink.last.eq(self.pcie_phy.source.last),
+        #        self.tlp.sender.sink.dat.eq(self.pcie_phy.source.dat),
+        #        self.tlp.sender.sink.be.eq(self.pcie_phy.source.be)
+        #    # fpga --> host
+        #    ).Elif(self.pcie_phy.sink.valid &
+        #           self.pcie_phy.sink.ready,
+        #        self.tlp.sender.sink.valid.eq(1),
+        #        self.tlp.sender.sink.last.eq(self.pcie_phy.sink.last),
+        #        self.tlp.sender.sink.dat.eq(self.pcie_phy.sink.dat),
+        #        self.tlp.sender.sink.be.eq(self.pcie_phy.sink.be)
+        #    )
+        #]
+
         self.comb += [
-            # host --> fpga
-            If(self.pcie_phy.source.valid &
-               self.pcie_phy.source.ready,
-                self.tlp.sender.sink.valid.eq(1),
-                self.tlp.sender.sink.last.eq(self.pcie_phy.source.last),
-                self.tlp.sender.sink.dat.eq(self.pcie_phy.source.dat),
-                self.tlp.sender.sink.be.eq(self.pcie_phy.source.be)
-            # fpga --> host
-            ).Elif(self.pcie_phy.sink.valid &
-                   self.pcie_phy.sink.ready,
-                self.tlp.sender.sink.valid.eq(1),
-                self.tlp.sender.sink.last.eq(self.pcie_phy.sink.last),
-                self.tlp.sender.sink.dat.eq(self.pcie_phy.sink.dat),
-                self.tlp.sender.sink.be.eq(self.pcie_phy.sink.be)
-            )
+            self.pcie_phy.source.connect(self.tlp.sender.sink),
+            self.tlp.receiver.source.connect(self.pcie_phy.sink)
         ]
 
         # led blink
@@ -164,20 +167,43 @@ class PCIeInjectorSoC(SoCCore):
         self.sync.usb += usb_counter.eq(usb_counter + 1)
         self.comb += platform.request("user_led", 1).eq(usb_counter[26])
 
-        # analyzer
-        analyzer_signals = [
-            self.tlp.sender.sink.valid,
-            self.tlp.sender.sink.ready,
-            self.tlp.sender.sink.last,
-            self.tlp.sender.sink.dat,
-            self.tlp.sender.sink.be,
+        # timing constraints
+        self.specials += [
+            Keep(self.crg.cd_usb.clk),
+            Keep(self.crg.cd_sys.clk)
+        ]
+        self.platform.add_period_constraint(self.crg.cd_sys.clk, 8.0)
+        self.platform.add_period_constraint(self.crg.cd_usb.clk, 10.0)
+        self.platform.add_period_constraint(self.platform.lookup_request("pcie_x2").clk_p, 10)
 
-            self.tlp.sender.source.valid,
-            self.tlp.sender.source.ready,
-            self.tlp.sender.source.data,
-            self.tlp.sender.source.last,
-            self.tlp.sender.fifo.level,
-            self.tlp.sender.debug
+ #        # analyzer
+ #        analyzer_signals = [
+ #            self.tlp.sender.sink.valid,
+ #            self.tlp.sender.sink.ready,
+ #            self.tlp.sender.sink.last,
+ #            self.tlp.sender.sink.dat,
+ #            self.tlp.sender.sink.be,
+ #
+ #            self.tlp.sender.source.valid,
+ #            self.tlp.sender.source.ready,
+ #            self.tlp.sender.source.data,
+ #            self.tlp.sender.source.last
+ #        ]
+ #
+ #        analyzer_signals = [
+ #            self.tlp.receiver.source.valid,
+ #            self.tlp.receiver.source.ready,
+ #            self.tlp.receiver.source.last,
+ #            self.tlp.receiver.source.dat,
+ #            self.tlp.receiver.source.be
+ #        ]
+
+        analyzer_signals = [
+            self.pcie_phy.sink.valid,
+            self.pcie_phy.sink.ready,
+            self.pcie_phy.sink.last,
+            self.pcie_phy.sink.dat,
+            self.pcie_phy.sink.be
         ]
 
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)

@@ -114,6 +114,29 @@ class TLPSniffer:
                     break
                 else:
                     print(tlp)
+                    if isinstance(tlp, RD32):
+                        cpl = CPLD()
+                        cpl.fmt = 0x2
+                        cpl.type = 0xa
+                        cpl.length = 1
+                        cpl.lower_address = (tlp.address & 0xff)*4
+                        cpl.requester_id = 0x0
+                        cpl.completer_id = 0x100
+                        cpl.byte_count = 4
+                        cpl.tag = 0x0
+                        if tlp.address == 0x3c140601:
+                            cpl.encode_dwords([0x50000000]) # FIXME (P)
+                        elif tlp.address == 0x3c140602:
+                            cpl.encode_dwords([0x51000000]) # FIXME (Q)
+                        elif tlp.address == 0x3c140603:
+                            cpl.encode_dwords([0x52000000]) # FIXME (R)
+                        else:
+                            cpl.encode_dwords([0x00000000]) # FIXME
+                        packet = bytes()
+                        for dword in cpl.dwords:
+                            packet += dword.to_bytes(4, byteorder="little")
+                        self.socket.sendto(packet, ("127.0.0.1", 2345))
+
                     dwords = dwords[length:]
 
 
