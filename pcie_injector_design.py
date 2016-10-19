@@ -138,11 +138,21 @@ class PCIeInjectorSoC(SoCCore):
         self.submodules.tlp = TLP(self.usb_core, self.usb_map["tlp"])
         self.comb += self.tlp.receiver.source.ready.eq(1)
         self.comb += [
-            self.tlp.sender.sink.valid.eq(self.pcie_phy.source.valid &
-                                          self.pcie_phy.source.ready),
-            self.tlp.sender.sink.last.eq(self.pcie_phy.source.valid),
-            self.tlp.sender.sink.dat.eq(self.pcie_phy.source.dat),
-            self.tlp.sender.sink.be.eq(self.pcie_phy.source.be)
+            # host --> fpga
+            If(self.pcie_phy.source.valid &
+               self.pcie_phy.source.ready,
+                self.tlp.sender.sink.valid.eq(1),
+                self.tlp.sender.sink.last.eq(self.pcie_phy.source.last),
+                self.tlp.sender.sink.dat.eq(self.pcie_phy.source.dat),
+                self.tlp.sender.sink.be.eq(self.pcie_phy.source.be)
+            # fpga --> host
+            ).Elif(self.pcie_phy.sink.valid &
+                   self.pcie_phy.sink.ready,
+                self.tlp.sender.sink.valid.eq(1),
+                self.tlp.sender.sink.last.eq(self.pcie_phy.sink.last),
+                self.tlp.sender.sink.dat.eq(self.pcie_phy.sink.dat),
+                self.tlp.sender.sink.be.eq(self.pcie_phy.sink.be)
+            )
         ]
 
         # led blink
