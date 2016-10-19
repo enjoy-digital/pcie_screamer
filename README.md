@@ -6,6 +6,13 @@ PCIe is the main high speed way of communicating between a processor and its per
 Doing Security on a PCIe system is complex because not only it requires using > $50k tools, but it is complicated to find devices that let you control the packets
 ![Global architecture](doc/board.png)
 
+### Featuring:
+* 1. XC7A50T Xilinx Serie 7 FPGA
+* 2. FT601 FTDI USB 3.0 
+* 3. MT41K256 4Gb DDR3 DRAM
+* 4. 4 High speed lane for up to PCIe 4x emulation
+
+
 ### History
 Currently, there were only few attacks made on PCIe devices, and they were mostly done using a microblaze insinde a xilinx FPGA in which the TLP were sent/received. Making it hard to really analyze.
 The other way was using one of those usb3380 which don't offer a lot of flexibility (32bit only) and no debug at all when it's about the PCIe state machine
