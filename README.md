@@ -4,7 +4,7 @@
 ### PCIe
 PCIe is the main high speed way of communicating between a processor and its peripherials. Used in PC, but also encapsulated in Thunderbolt, and now even used in mobile phones.
 Doing Security on a PCIe system is complex because not only it requires using > $50k tools, but it is complicated to find devices that let you control the packets
-
+![Global architecture](doc/board.png)
 
 ### History
 Currently, there were only few attacks made on PCIe devices, and they were mostly done using a microblaze insinde a xilinx FPGA in which the TLP were sent/received. Making it hard to really analyze.
@@ -20,4 +20,4 @@ It let us
 * 3. Have the packets sent over UDP in order to ease the creation of wireshark dissectors
 * 4. Python (scapy?) based communication tool
 
-![Global architecture](doc/board.png)
+
