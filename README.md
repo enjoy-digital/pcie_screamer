@@ -29,4 +29,6 @@ It let us
 * 3. Have the packets sent over UDP in order to ease the creation of wireshark dissectors
 * 4. Python (scapy?) based communication tool
 
+The board connect to daughter boards over SATA cable. In fact, Signal Integrity is a key when doing PCIe. SATA cable are the cheapest way to keep the signal integrity in this case.
 
+![Daughter Board(doc/SATA2PCIe.png)
