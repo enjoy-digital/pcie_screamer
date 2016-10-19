@@ -12,6 +12,8 @@ Doing Security on a PCIe system is complex because not only it requires using > 
 * 3. MT41K256 4Gb DDR3 DRAM
 * 4. 4 High speed lane for up to PCIe 4x emulation
 
+![Global architecture](doc/functionnal.png)
+
 
 ### History
 Currently, there were only few attacks made on PCIe devices, and they were mostly done using a microblaze insinde a xilinx FPGA in which the TLP were sent/received. Making it hard to really analyze.
