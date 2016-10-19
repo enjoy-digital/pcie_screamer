@@ -20,4 +20,4 @@ It let us
 * 3. Have the packets sent over UDP in order to ease the creation of wireshark dissectors
 * 4. Python (scapy?) based communication tool
 
-![Global architecture](board.png)
+![Global architecture](doc/board.png)
