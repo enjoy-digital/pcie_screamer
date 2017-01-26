@@ -43,8 +43,6 @@ static void write_pn_data(uint32_t *dst, int count, uint32_t *pseed)
     *pseed = seed;
 }
 
-#define DEBUG_CHECK
-
 /* Return the number of errors */
 static int check_pn_data(const uint32_t *tab, int count,
                          uint32_t *pseed)
@@ -55,12 +53,7 @@ static int check_pn_data(const uint32_t *tab, int count,
     errors = 0;
     seed = *pseed;
     for(i = 0; i < count; i++) {
-        if ((tab[i] & 0xffff) != (seed_to_data(seed) & 0xffff)) {
-        //if ((tab[i]) != (seed_to_data(seed))) {
-#ifdef DEBUG_CHECK
-	    if (i < 4)
-                printf("%5d / e: %08x / r: %08x\n", i, seed_to_data(seed), tab[i]);
-#endif
+        if (tab[i] != seed_to_data(seed)) {
             errors++;
         }
         seed++;
@@ -69,7 +62,7 @@ static int check_pn_data(const uint32_t *tab, int count,
     return errors;
 }
 
-#define MAX_SHIFT_OFFSET 1024
+#define MAX_SHIFT_OFFSET 128
 
 /* test DMA with a buffer size of buf_size bytes in loopback
    mode. */
@@ -148,7 +141,6 @@ void dma_test(LitePCIeState *s, int buf_size, int buf_count, BOOL is_loopback)
 
                     /* find the initial shift */
                     for(shift = 0; shift < 2 * MAX_SHIFT_OFFSET; shift++) {
-                        printf("shift: %d\n", shift);
                         seed = rx_seed + shift;
                         rx_errors = check_pn_data(rx_buf, rx_buf_len, &seed);
                         if (rx_errors <= (rx_buf_len / 2)) {
