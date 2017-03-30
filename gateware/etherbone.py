@@ -429,8 +429,9 @@ class EtherboneRecord(Module):
         self.comb += [
             sender.source.connect(packetizer.sink),
             packetizer.source.connect(source),
-            # XXX improve this
-            source.length.eq(sender.source.wcount*4 + 4 + etherbone_record_header.length)
+            source.length.eq(etherbone_record_header.length +
+                             (sender.source.wcount != 0)*4 + sender.source.wcount*4 +
+                             (sender.source.rcount != 0)*4 + sender.source.rcount*4)
         ]
         if endianness is "big":
             self.comb += packetizer.sink.data.eq(reverse_bytes(sender.source.data))
