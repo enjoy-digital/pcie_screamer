@@ -250,20 +250,20 @@ class PCIeInjectorSoC(SoCSDRAM):
 
 
         # led blink
-        sys_counter = Signal(32)
-        self.sync.sys += sys_counter.eq(sys_counter + 1)
-        self.comb += platform.request("user_led", 0).eq(sys_counter[26])
-
         usb_counter = Signal(32)
         self.sync.usb += usb_counter.eq(usb_counter + 1)
-        self.comb += platform.request("user_led", 1).eq(usb_counter[26])
+        self.comb += platform.request("user_led", 0).eq(usb_counter[26])
+
+        pcie_counter = Signal(32)
+        self.sync.clk125 += pcie_counter.eq(pcie_counter + 1)
+        self.comb += platform.request("user_led", 1).eq(pcie_counter[26])
 
         # timing constraints
         self.crg.cd_sys.clk.attr.add("keep")
         self.crg.cd_usb.clk.attr.add("keep")
-        self.platform.add_period_constraint(self.crg.cd_sys.clk, 8.0)
+        self.platform.add_period_constraint(self.crg.cd_sys.clk, 10.0)
         self.platform.add_period_constraint(self.crg.cd_usb.clk, 10.0)
-        self.platform.add_period_constraint(self.platform.lookup_request("pcie_x2").clk_p, 10)
+        self.platform.add_period_constraint(self.platform.lookup_request("pcie_x2").clk_p, 10.0)
 
         if with_pcie_analyzer:
             analyzer_signals = [
