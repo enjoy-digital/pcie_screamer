@@ -3,9 +3,7 @@ from litex.soc.tools.remote import RemoteClient
 
 import time
 
-# DDR3 init and test for a7ddrphy design
-# use arty_ddr3 design with this script to
-# find working bitslip/delay configuration
+# DDR3 init and test to find working bitslip/delay configuration
 
 dfii_control_sel     = 0x01
 dfii_control_cke     = 0x02

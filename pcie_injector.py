@@ -257,7 +257,6 @@ class PCIeInjectorSoC(SoCSDRAM):
         self.submodules.msi = MSI()
         self.comb += self.msi.source.connect(self.pciephy.interrupt)
 
-
         # led blink
         usb_counter = Signal(32)
         self.sync.usb += usb_counter.eq(usb_counter + 1)
@@ -288,7 +287,7 @@ class PCIeInjectorSoC(SoCSDRAM):
                 self.pciephy.source.dat,
                 self.pciephy.source.be
             ]
-            self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)
+            self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024, cd="sys")
 
     def do_exit(self, vns):
         if hasattr(self, "analyzer"):
