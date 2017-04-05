@@ -36,22 +36,14 @@ class _CRG(Module, AutoCSR):
         self.clock_domains.cd_clk125 = ClockDomain("clk125")
         self.clock_domains.cd_usb = ClockDomain()
 
-        # soft reset generaton
-        self._soft_rst = CSR()
-        soft_rst = Signal()
-        # trigger soft reset 1us after CSR access to terminate
-        # Wishbone access when reseting from PCIe
-        self.sync += [
-            timeline(self._soft_rst.re & self._soft_rst.r, [(125, [soft_rst.eq(1)])]),
-        ]
-
         # sys clock domain (125MHz from PCIe)
         self.comb += self.cd_sys.clk.eq(self.cd_clk125.clk)
-        self.specials += AsyncResetSynchronizer(self.cd_sys, self.cd_clk125.rst | soft_rst)
+        self.specials += AsyncResetSynchronizer(self.cd_sys, self.cd_clk125.rst)
 
         # usb clock domain (100MHz from fifo interface)
         self.comb += self.cd_usb.clk.eq(platform.request("usb_fifo_clock"))
-        self.specials += AsyncResetSynchronizer(self.cd_usb, self.cd_clk125.rst | soft_rst)
+        self.specials += AsyncResetSynchronizer(self.cd_usb, self.cd_clk125.rst)
+
 
 class PCIeInjectorSoC(SoCCore):
     csr_map = {
