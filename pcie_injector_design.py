@@ -36,13 +36,13 @@ class _CRG(Module, AutoCSR):
         self.clock_domains.cd_clk125 = ClockDomain("clk125")
         self.clock_domains.cd_usb = ClockDomain()
 
-        # sys clock domain (125MHz from PCIe)
-        self.comb += self.cd_sys.clk.eq(self.cd_clk125.clk)
-        self.specials += AsyncResetSynchronizer(self.cd_sys, self.cd_clk125.rst)
-
-        # usb clock domain (100MHz from fifo interface)
+        # usb clock domain (100MHz from usb)
         self.comb += self.cd_usb.clk.eq(platform.request("usb_fifo_clock"))
         self.specials += AsyncResetSynchronizer(self.cd_usb, self.cd_clk125.rst)
+
+        # sys clock domain (100MHz from usb)
+        self.comb += self.cd_sys.clk.eq(self.cd_usb.clk)
+        self.specials += AsyncResetSynchronizer(self.cd_sys, self.cd_usb.rst)
 
 
 class PCIeInjectorSoC(SoCCore):
@@ -63,7 +63,7 @@ class PCIeInjectorSoC(SoCCore):
     }
 
     def __init__(self, platform):
-        clk_freq = 125*1000000
+        clk_freq = int(100e6)
         SoCCore.__init__(self, platform, clk_freq,
             cpu_type=None,
             shadow_base=0x00000000,
@@ -75,7 +75,7 @@ class PCIeInjectorSoC(SoCCore):
         self.submodules.crg = _CRG(platform)
 
         # pcie endpoint
-        self.submodules.pcie_phy = S7PCIEPHY(platform, link_width=2)
+        self.submodules.pcie_phy = S7PCIEPHY(platform, link_width=2, cd="sys")
 
         # uart bridge
         self.add_cpu_or_bridge(UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=115200))
@@ -87,7 +87,7 @@ class PCIeInjectorSoC(SoCCore):
             usb_pads.rst.eq(1),
             usb_pads.be.eq(0xf)
         ]
-        self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, 100*1000000)
+        self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, clk_freq)
         self.submodules.usb_core = USBCore(self.usb_phy, clk_freq)
 
         # usb <--> wishbone
