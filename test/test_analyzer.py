@@ -1,7 +1,7 @@
 from litex.soc.tools.remote import RemoteClient
 from litescope.software.driver.analyzer import LiteScopeAnalyzerDriver
 
-wb = RemoteClient(csr_data_width=32)
+wb = RemoteClient()
 wb.open()
 
 # # #
