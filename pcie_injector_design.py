@@ -23,6 +23,7 @@ from liteusb.phy.ft245 import phy_description, FT245PHYSynchronous
 from gateware.usb import USBCore
 from gateware.etherbone import Etherbone
 from gateware.tlp import TLP
+from gateware.msi import MSI
 
 from litescope import LiteScopeAnalyzer
 
@@ -56,7 +57,8 @@ class PCIeInjectorSoC(SoCCore):
     csr_map = {
         "crg":      16,
         "pcie_phy": 17,
-        "analyzer": 18
+        "msi":      18,
+        "analyzer": 19
     }
     csr_map.update(SoCCore.csr_map)
 
@@ -65,7 +67,7 @@ class PCIeInjectorSoC(SoCCore):
 
     usb_map = {
         "wishbone": 0,
-        "tlp":      1,
+        "tlp":      1
     }
 
     def __init__(self, platform):
@@ -106,6 +108,11 @@ class PCIeInjectorSoC(SoCCore):
             self.pcie_phy.source.connect(self.tlp.sender.sink),
             self.tlp.receiver.source.connect(self.pcie_phy.sink)
         ]
+
+        # wishbone --> msi
+        self.submodules.msi = MSI()
+        self.comb += self.msi.source.connect(self.pcie_phy.interrupt)
+
 
         # led blink
         sys_counter = Signal(32)
