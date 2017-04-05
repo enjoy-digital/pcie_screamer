@@ -1,3 +1,2 @@
--add mux to connect PCIe TLPs to USB packetizer/depacketizer
--test TLPs reception/injection on hardware
--almost done :)
+- add MSI support
+- recode FTDI software
