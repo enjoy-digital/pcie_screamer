@@ -6,7 +6,6 @@ from litex.gen import *
 from litex.gen.genlib.io import CRG
 from litex.gen.genlib.resetsync import AsyncResetSynchronizer
 from litex.gen.genlib.misc import timeline
-from litex.gen.fhdl.specials import Keep
 from litex.build.tools import write_to_file
 
 import platform as pcie_injector
@@ -118,10 +117,8 @@ class PCIeInjectorSoC(SoCCore):
         self.comb += platform.request("user_led", 1).eq(usb_counter[26])
 
         # timing constraints
-        self.specials += [
-            Keep(self.crg.cd_usb.clk),
-            Keep(self.crg.cd_sys.clk)
-        ]
+        self.crg.cd_sys.clk.attr.add("keep")
+        self.crg.cd_usb.clk.attr.add("keep")
         self.platform.add_period_constraint(self.crg.cd_sys.clk, 8.0)
         self.platform.add_period_constraint(self.crg.cd_usb.clk, 10.0)
         self.platform.add_period_constraint(self.platform.lookup_request("pcie_x2").clk_p, 10)
