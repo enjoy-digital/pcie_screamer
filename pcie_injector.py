@@ -8,6 +8,7 @@ from litex.build.xilinx import XilinxPlatform
 from litex.soc.interconnect.csr import *
 from litex.soc.integration.soc_sdram import *
 from litex.soc.integration.builder import *
+from litex.soc.cores.uart.bridge import UARTWishboneBridge
 
 from litedram.modules import MT41K256M16
 from litedram.phy import a7ddrphy
@@ -203,14 +204,22 @@ class PCIeInjectorSoC(SoCSDRAM):
         "tlp":      1
     }
 
-    def __init__(self, platform, with_pcie_analyzer=False):
+    def __init__(self, platform, with_cpu=False, with_pcie_analyzer=False):
         clk_freq = int(100e6)
         SoCSDRAM.__init__(self, platform, clk_freq,
-            integrated_rom_size=0x8000,
+            cpu_type="lm32" if with_cpu else None,
+            integrated_rom_size=0x8000 if with_cpu else 0,
             integrated_sram_size=0x8000,
-            ident="PCIe Injector example design"
+            with_uart=with_cpu,
+            ident="PCIe Injector example design",
+            with_timer=with_cpu
         )
         self.submodules.crg = _CRG(platform)
+
+        if not with_cpu:
+            # use serial as wishbone bridge when no cpu
+            self.add_cpu_or_bridge(UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=115200))
+            self.add_wb_master(self.cpu_or_bridge.wishbone)
 
         # sdram
         self.submodules.ddrphy = a7ddrphy.A7DDRPHY(platform.request("ddram"))
