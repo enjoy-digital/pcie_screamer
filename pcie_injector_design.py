@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-import argparse
-import os
-
 from litex.gen import *
-from litex.gen.genlib.io import CRG
 from litex.gen.genlib.resetsync import AsyncResetSynchronizer
-from litex.gen.genlib.misc import timeline
-from litex.build.tools import write_to_file
 
 import platform as pcie_injector
 
 from litex.soc.interconnect.csr import *
 from litex.soc.interconnect import wishbone
 
-from litex.soc.integration.soc_core import *
-from litex.soc.cores.uart.bridge import UARTWishboneBridge
+from litex.soc.integration.soc_sdram import *
 from litex.soc.integration.builder import *
+
+from litedram.modules import MT41K256M16
+from litedram.phy import a7ddrphy
 
 from litepcie.phy.s7pciephy import S7PCIEPHY
 
@@ -27,59 +23,107 @@ from gateware.msi import MSI
 
 from litescope import LiteScopeAnalyzer
 
-import cpu_interface
-
 
 class _CRG(Module, AutoCSR):
     def __init__(self, platform):
         self.clock_domains.cd_sys = ClockDomain("sys")
-        self.clock_domains.cd_clk125 = ClockDomain("clk125")
+        self.clock_domains.cd_sys4x = ClockDomain(reset_less=True)
+        self.clock_domains.cd_sys4x_dqs = ClockDomain(reset_less=True)
+        self.clock_domains.cd_clk200 = ClockDomain()
+
         self.clock_domains.cd_usb = ClockDomain()
+
+        self.clock_domains.cd_clk125 = ClockDomain("clk125")
 
         # usb clock domain (100MHz from usb)
         self.comb += self.cd_usb.clk.eq(platform.request("usb_fifo_clock"))
         self.specials += AsyncResetSynchronizer(self.cd_usb, self.cd_clk125.rst)
 
-        # sys clock domain (100MHz from usb)
-        self.comb += self.cd_sys.clk.eq(self.cd_usb.clk)
-        self.specials += AsyncResetSynchronizer(self.cd_sys, self.cd_usb.rst)
+        # sys & ddr clock domains
+        pll_locked = Signal()
+        pll_fb = Signal()
+        pll_sys = Signal()
+        pll_sys4x = Signal()
+        pll_sys4x_dqs = Signal()
+        pll_clk200 = Signal()
+        self.specials += [
+            Instance("PLLE2_BASE",
+                     p_STARTUP_WAIT="FALSE", o_LOCKED=pll_locked,
+
+                     # VCO @ 1600 MHz
+                     p_REF_JITTER1=0.01, p_CLKIN1_PERIOD=10.0,
+                     p_CLKFBOUT_MULT=16, p_DIVCLK_DIVIDE=1,
+                     i_CLKIN1=ClockSignal("usb"), i_CLKFBIN=pll_fb, o_CLKFBOUT=pll_fb,
+
+                     # 100 MHz
+                     p_CLKOUT0_DIVIDE=16, p_CLKOUT0_PHASE=0.0,
+                     o_CLKOUT0=pll_sys,
+
+                     # 400 MHz
+                     p_CLKOUT1_DIVIDE=4, p_CLKOUT1_PHASE=0.0,
+                     o_CLKOUT1=pll_sys4x,
+
+                     # 400 MHz dqs
+                     p_CLKOUT2_DIVIDE=4, p_CLKOUT2_PHASE=90.0,
+                     o_CLKOUT2=pll_sys4x_dqs,
+
+                     # 200 MHz
+                     p_CLKOUT3_DIVIDE=8, p_CLKOUT3_PHASE=0.0,
+                     o_CLKOUT3=pll_clk200,
+            ),
+            Instance("BUFG", i_I=pll_sys, o_O=self.cd_sys.clk),
+            Instance("BUFG", i_I=pll_sys4x, o_O=self.cd_sys4x.clk),
+            Instance("BUFG", i_I=pll_sys4x_dqs, o_O=self.cd_sys4x_dqs.clk),
+            Instance("BUFG", i_I=pll_clk200, o_O=self.cd_clk200.clk),
+            AsyncResetSynchronizer(self.cd_sys, ~pll_locked | ~ResetSignal("usb")),
+            AsyncResetSynchronizer(self.cd_clk200, ~pll_locked | ~ResetSignal("usb"))
+        ]
+
+        reset_counter = Signal(4, reset=15)
+        ic_reset = Signal(reset=1)
+        self.sync.clk200 += \
+            If(reset_counter != 0,
+                reset_counter.eq(reset_counter - 1)
+            ).Else(
+                ic_reset.eq(0)
+            )
+        self.specials += Instance("IDELAYCTRL", i_REFCLK=ClockSignal("clk200"), i_RST=ic_reset)
 
 
-class PCIeInjectorSoC(SoCCore):
+class PCIeInjectorSoC(SoCSDRAM):
     csr_map = {
-        "crg":      16,
-        "pcie_phy": 17,
+        "ddrphy":   16,
+        "pciephy":  17,
         "msi":      18,
         "analyzer": 19
     }
-    csr_map.update(SoCCore.csr_map)
-
-    mem_map = SoCCore.mem_map
-    mem_map["csr"] = 0x00000000
+    csr_map.update(SoCSDRAM.csr_map)
 
     usb_map = {
         "wishbone": 0,
         "tlp":      1
     }
 
-    def __init__(self, platform):
+    def __init__(self, platform, with_pcie_analyzer=False):
         clk_freq = int(100e6)
-        SoCCore.__init__(self, platform, clk_freq,
-            cpu_type=None,
-            shadow_base=0x00000000,
-            csr_data_width=32,
-            with_uart=False,
-            ident="PCIe Injector example design",
-            with_timer=False
+        SoCSDRAM.__init__(self, platform, clk_freq,
+            integrated_rom_size=0x8000,
+            integrated_sram_size=0x8000,
+            ident="PCIe Injector example design"
         )
         self.submodules.crg = _CRG(platform)
 
-        # pcie endpoint
-        self.submodules.pcie_phy = S7PCIEPHY(platform, link_width=2, cd="sys")
+        # sdram
+        self.submodules.ddrphy = a7ddrphy.A7DDRPHY(platform.request("ddram"))
+        self.add_constant("A7DDRPHY_BITSLIP", 2)
+        self.add_constant("A7DDRPHY_DELAY", 8)
+        sdram_module = MT41K256M16(self.clk_freq, "1:4")
+        self.register_sdram(self.ddrphy,
+                            sdram_module.geom_settings,
+                            sdram_module.timing_settings)
 
-        # uart bridge
-        self.add_cpu_or_bridge(UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=115200))
-        self.add_wb_master(self.cpu_or_bridge.wishbone)
+        # pcie endpoint
+        self.submodules.pciephy = S7PCIEPHY(platform, link_width=2, cd="sys")
 
         # usb core
         usb_pads = platform.request("usb_fifo")
@@ -97,13 +141,13 @@ class PCIeInjectorSoC(SoCCore):
         # usb <--> tlp
         self.submodules.tlp = TLP(self.usb_core, self.usb_map["tlp"])
         self.comb += [
-            self.pcie_phy.source.connect(self.tlp.sender.sink),
-            self.tlp.receiver.source.connect(self.pcie_phy.sink)
+            self.pciephy.source.connect(self.tlp.sender.sink),
+            self.tlp.receiver.source.connect(self.pciephy.sink)
         ]
 
         # wishbone --> msi
         self.submodules.msi = MSI()
-        self.comb += self.msi.source.connect(self.pcie_phy.interrupt)
+        self.comb += self.msi.source.connect(self.pciephy.interrupt)
 
 
         # led blink
@@ -122,33 +166,34 @@ class PCIeInjectorSoC(SoCCore):
         self.platform.add_period_constraint(self.crg.cd_usb.clk, 10.0)
         self.platform.add_period_constraint(self.platform.lookup_request("pcie_x2").clk_p, 10)
 
-        analyzer_signals = [
-            self.pcie_phy.sink.valid,
-            self.pcie_phy.sink.ready,
-            self.pcie_phy.sink.last,
-            self.pcie_phy.sink.dat,
-            self.pcie_phy.sink.be
-        ]
+        if with_pcie_analyzer:
+            analyzer_signals = [
+                self.pciephy.sink.valid,
+                self.pciephy.sink.ready,
+                self.pciephy.sink.last,
+                self.pciephy.sink.dat,
+                self.pciephy.sink.be,
 
-        self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)
+                self.pciephy.source.valid,
+                self.pciephy.source.ready,
+                self.pciephy.source.last,
+                self.pciephy.source.dat,
+                self.pciephy.source.be
+            ]
+            self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)
 
     def do_exit(self, vns):
-        self.analyzer.export_csv(vns, "test/analyzer.csv")
+        if hasattr(self, "analyzer"):
+            self.analyzer.export_csv(vns, "test/analyzer.csv")
+
 
 def main():
-    parser = argparse.ArgumentParser(description="PCIe Injector LiteX SoC")
-    builder_args(parser)
-    soc_core_args(parser)
-    args = parser.parse_args()
-
     platform = pcie_injector.Platform()
-    soc = PCIeInjectorSoC(platform, **soc_core_argdict(args))
+    soc = PCIeInjectorSoC(platform)
     builder = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
     vns = builder.build()
     soc.do_exit(vns)
 
-    csr_header = cpu_interface.get_csr_header(soc.get_csr_regions(), soc.get_constants())
-    write_to_file(os.path.join("software", "pcie", "kernel", "csr.h"), csr_header)
 
 if __name__ == "__main__":
     main()
