@@ -8,7 +8,7 @@ from litex.build.xilinx import XilinxPlatform
 from litex.soc.interconnect.csr import *
 from litex.soc.integration.soc_sdram import *
 from litex.soc.integration.builder import *
-from litex.soc.cores.uart.bridge import UARTWishboneBridge
+from litex.soc.cores.uart import UARTWishboneBridge
 
 from litedram.modules import MT41K256M16
 from litedram.phy import a7ddrphy
@@ -133,11 +133,9 @@ class _CRG(Module, AutoCSR):
 
         self.clock_domains.cd_usb = ClockDomain()
 
-        self.clock_domains.cd_clk125 = ClockDomain("clk125")
-
         # usb clock domain (100MHz from usb)
         self.comb += self.cd_usb.clk.eq(platform.request("usb_fifo_clock"))
-        self.specials += AsyncResetSynchronizer(self.cd_usb, self.cd_clk125.rst)
+        self.specials += AsyncResetSynchronizer(self.cd_usb, ResetSignal("pcie"))
 
         # sys & ddr clock domains
         pll_locked = Signal()
@@ -231,7 +229,7 @@ class PCIeInjectorSoC(SoCSDRAM):
                             sdram_module.timing_settings)
 
         # pcie endpoint
-        self.submodules.pciephy = S7PCIEPHY(platform, link_width=2, cd="sys")
+        self.submodules.pciephy = S7PCIEPHY(platform, platform.request("pcie_x2"), cd="sys")
 
         # usb core
         usb_pads = platform.request("usb_fifo")
@@ -255,7 +253,7 @@ class PCIeInjectorSoC(SoCSDRAM):
 
         # wishbone --> msi
         self.submodules.msi = MSI()
-        self.comb += self.msi.source.connect(self.pciephy.interrupt)
+        self.comb += self.msi.source.connect(self.pciephy.msi)
 
         # led blink
         usb_counter = Signal(32)
@@ -263,7 +261,7 @@ class PCIeInjectorSoC(SoCSDRAM):
         self.comb += platform.request("user_led", 0).eq(usb_counter[26])
 
         pcie_counter = Signal(32)
-        self.sync.clk125 += pcie_counter.eq(pcie_counter + 1)
+        self.sync.pcie += pcie_counter.eq(pcie_counter + 1)
         self.comb += platform.request("user_led", 1).eq(pcie_counter[26])
 
         # timing constraints

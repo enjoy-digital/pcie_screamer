@@ -3,7 +3,7 @@ from litex.gen import *
 from litex.soc.interconnect import stream
 from litex.soc.interconnect.csr import *
 
-from litepcie.common import interrupt_layout
+from litepcie.common import msi_layout
 
 
 class MSI(Module, AutoCSR):
@@ -12,7 +12,7 @@ class MSI(Module, AutoCSR):
         self.done = CSRStatus()
         self.data = CSRStorage(8)
 
-        self.source = stream.Endpoint(interrupt_layout())
+        self.source = stream.Endpoint(msi_layout())
 
         # # #
 
