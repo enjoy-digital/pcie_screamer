@@ -1,33 +1,30 @@
 # PCIe Injector
 
 
-### PCIe
-PCIe is the main high speed way of communicating between a processor and its peripherials. It is used in PC (also encapsulated in Thunderbolt) and now even in mobile phones.
-Doing security research on a PCIe system is complex because it requires expensive tools (>$50k) and such tools are not that common when packet generation is needed.
+## PCIe
+The PCIe bus is now the main high speed communication bus between a processor and its peripherials. It is used in all PC (sometime encapsulated in Thunderbolt) and now even in mobile phones.
+Doing security research on PCIe systems can requires very expensive tools (>$50k) and packet generaration for such tools is not
+a common feature. PCIe Injector provides a such tool at a more reasonable price.
 
 ![Global architecture](doc/board.png)
 
-### Featuring:
-* 1. XC7A50T Xilinx Serie 7 FPGA
-* 2. FT601 FTDI USB 3.0
-* 3. MT41K256 4Gb DDR3 DRAM
-* 4. 4 High speed lane for up to PCIe 4x emulation
+## Board
+- Xilinx Artix7 XC7A50T FPGA
+- FT601 FTDI USB 3.0
+- MT41K256 4Gb DDR3 DRAM
+- PCIe Gen2 X1
 
-![Global architecture](doc/functionnal.png)
+![Global architecture](doc/architecture.png)
 
 
-### History
+## History
 Currently, only few attacks were made on PCIe devices. Most of them were done using a Microblaze inside a Xilinx FPGA to send/receive the TLPs, making it hard to really analyze. (Using embedded C software to generate/analyze traffic) An other way is to use USB3380 chip, but it is also not flexible enough (only supporting 32bits addressing) and does not allow debugging the PCIe state machine.
 
 ## Principle
 
-The PCIe injector is based on a Series 7 Xilinx FPGA connected to a DDR3 and a high speed USB 3.0 FT601 chip from FTDI.
+The PCIe injector is based on a Artix7 FPGA from Xilinx connected to a DDR3 and a high speed USB 3.0 FT601 chip from FTDI.
 
 It allows:
-* 1. Having a full control of the PCIe core.
-* 2. Sending/Receiving TLPs through USB 3.0 (or bufferize it to/from DDR3)
-* 3. Using flexible software/tools on the Host for receiving/generating/analyzing the TLPs. (Wireshark dissectors, scapy, ...)
-
-The board connects to daughter boards over SATA cable. Good signal integrity is mandatory when doing PCIe and SATA cable are the cheapest way to achieve that.
-
-![Daughter Board](doc/SATA2PCIe.png)
+- Having a full control of the PCIe core.
+- Sending/Receiving TLPs through USB 3.0 (or bufferize it to/from DDR3)
+- Using flexible software/tools on the Host for receiving/generating/analyzing the TLPs. (Wireshark dissectors, scapy, ...)
