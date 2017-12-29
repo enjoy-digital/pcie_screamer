@@ -68,20 +68,10 @@ _io = [
         Subsignal("rst_n", Pins("AB7"), IOStandard("LVCMOS33")),
         Subsignal("clk_p", Pins("F6")),
         Subsignal("clk_n", Pins("E6")),
-        Subsignal("rx_p", Pins("B8")),
-        Subsignal("rx_n", Pins("A8")),
-        Subsignal("tx_p", Pins("B4")),
-        Subsignal("tx_n", Pins("A4"))
-    ),
-
-    ("pcie_x2", 0,
-        Subsignal("rst_n", Pins("AB7"), IOStandard("LVCMOS33")),
-        Subsignal("clk_p", Pins("F6")),
-        Subsignal("clk_n", Pins("E6")),
-        Subsignal("rx_p", Pins("B8 D11")),
-        Subsignal("rx_n", Pins("A8 C11")),
-        Subsignal("tx_p", Pins("B4 D5")),
-        Subsignal("tx_n", Pins("A4 C5"))
+        Subsignal("rx_p", Pins("B10")),
+        Subsignal("rx_n", Pins("A10")),
+        Subsignal("tx_p", Pins("B6")),
+        Subsignal("tx_n", Pins("A6"))
     ),
 
     ("usb_fifo_clock", 0, Pins("D17"), IOStandard("LVCMOS33")),
@@ -229,7 +219,7 @@ class PCIeInjectorSoC(SoCSDRAM):
                             sdram_module.timing_settings)
 
         # pcie endpoint
-        self.submodules.pciephy = S7PCIEPHY(platform, platform.request("pcie_x2"), cd="sys")
+        self.submodules.pciephy = S7PCIEPHY(platform, platform.request("pcie_x1"), cd="sys")
 
         # usb core
         usb_pads = platform.request("usb_fifo")
@@ -269,7 +259,7 @@ class PCIeInjectorSoC(SoCSDRAM):
         self.crg.cd_usb.clk.attr.add("keep")
         self.platform.add_period_constraint(self.crg.cd_sys.clk, 10.0)
         self.platform.add_period_constraint(self.crg.cd_usb.clk, 10.0)
-        self.platform.add_period_constraint(self.platform.lookup_request("pcie_x2").clk_p, 10.0)
+        self.platform.add_period_constraint(self.platform.lookup_request("pcie_x1").clk_p, 10.0)
 
         if with_pcie_analyzer:
             analyzer_signals = [
