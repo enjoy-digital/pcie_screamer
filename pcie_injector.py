@@ -25,7 +25,7 @@ from litescope import LiteScopeAnalyzer
 
 
 _io = [
-    ("clk100", 0, Pins("D17"), IOStandard("LVCMOS33")),
+    ("clk100", 0, Pins("R4"), IOStandard("LVCMOS33")),
 
     ("user_led", 0, Pins("AB1"), IOStandard("LVCMOS33")),
     ("user_led", 1, Pins("AB8"), IOStandard("LVCMOS33")),
@@ -128,6 +128,8 @@ class _CRG(Module, AutoCSR):
         self.comb += self.cd_usb.clk.eq(platform.request("usb_fifo_clock"))
         self.specials += AsyncResetSynchronizer(self.cd_usb, ResetSignal("pcie"))
 
+        clk100 = platform.request("clk100")
+
         # sys & ddr clock domains
         pll_locked = Signal()
         pll_fb = Signal()
@@ -142,7 +144,7 @@ class _CRG(Module, AutoCSR):
                      # VCO @ 1600 MHz
                      p_REF_JITTER1=0.01, p_CLKIN1_PERIOD=10.0,
                      p_CLKFBOUT_MULT=16, p_DIVCLK_DIVIDE=1,
-                     i_CLKIN1=ClockSignal("usb"), i_CLKFBIN=pll_fb, o_CLKFBOUT=pll_fb,
+                     i_CLKIN1=clk100, i_CLKFBIN=pll_fb, o_CLKFBOUT=pll_fb,
 
                      # 100 MHz
                      p_CLKOUT0_DIVIDE=16, p_CLKOUT0_PHASE=0.0,
@@ -164,8 +166,8 @@ class _CRG(Module, AutoCSR):
             Instance("BUFG", i_I=pll_sys4x, o_O=self.cd_sys4x.clk),
             Instance("BUFG", i_I=pll_sys4x_dqs, o_O=self.cd_sys4x_dqs.clk),
             Instance("BUFG", i_I=pll_clk200, o_O=self.cd_clk200.clk),
-            AsyncResetSynchronizer(self.cd_sys, ~pll_locked | ~ResetSignal("usb")),
-            AsyncResetSynchronizer(self.cd_clk200, ~pll_locked | ~ResetSignal("usb"))
+            AsyncResetSynchronizer(self.cd_sys, ~pll_locked),
+            AsyncResetSynchronizer(self.cd_clk200, ~pll_locked)
         ]
 
         reset_counter = Signal(4, reset=15)
