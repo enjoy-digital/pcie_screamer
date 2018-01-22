@@ -96,7 +96,7 @@ class Platform(XilinxPlatform):
     default_clk_period = 10.0
 
     def __init__(self, toolchain="vivado", programmer="vivado"):
-        XilinxPlatform.__init__(self, "xc7a50t-fgg484-1", _io,
+        XilinxPlatform.__init__(self, "xc7a35t-fgg484-2", _io,
                                 toolchain=toolchain)
         self.toolchain.bitstream_commands = \
             ["set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]"]
