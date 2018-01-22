@@ -99,7 +99,8 @@ class Platform(XilinxPlatform):
         XilinxPlatform.__init__(self, "xc7a35t-fgg484-2", _io,
                                 toolchain=toolchain)
         self.toolchain.bitstream_commands = \
-            ["set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]"]
+            ["set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]",
+             "set_property BITSTREAM.CONFIG.CONFIGRATE 40 [current_design]"]
         self.toolchain.additional_commands = \
             ["write_cfgmem -force -format bin -interface spix4 -size 16 "
              "-loadbit \"up 0x0 {build_name}.bit\" -file {build_name}.bin"]
