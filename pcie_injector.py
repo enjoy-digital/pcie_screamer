@@ -21,6 +21,7 @@ from gateware.usb import USBCore
 from gateware.etherbone import Etherbone
 from gateware.tlp import TLP
 from gateware.msi import MSI
+from gateware.ft601 import FT601Sync
 
 from litescope import LiteScopeAnalyzer
 
@@ -232,7 +233,8 @@ class PCIeInjectorSoC(SoCSDRAM):
             usb_pads.siwua.eq(1),
             usb_pads.be.eq(0xf)
         ]
-        self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, clk_freq)
+        # self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, clk_freq, fifo_depth=16)
+        self.submodules.usb_phy = FT601Sync(usb_pads, dw=32, timeout=1024)
 
         if with_loopback:
             self.submodules.usb_loopback_fifo = stream.SyncFIFO(phy_description(32), 2048)
