@@ -8,6 +8,7 @@ from litex.build.xilinx import XilinxPlatform
 from litex.soc.interconnect.csr import *
 from litex.soc.integration.soc_sdram import *
 from litex.soc.integration.builder import *
+from litex.soc.interconnect import stream
 from litex.soc.cores.uart import UARTWishboneBridge
 
 from litedram.modules import MT41K256M16
@@ -195,7 +196,7 @@ class PCIeInjectorSoC(SoCSDRAM):
         "tlp":      1
     }
 
-    def __init__(self, platform, with_cpu=False, with_pcie_analyzer=False):
+    def __init__(self, platform, with_cpu=False, with_analyzer=True, with_loopback=False):
         clk_freq = int(100e6)
         SoCSDRAM.__init__(self, platform, clk_freq,
             cpu_type="lm32" if with_cpu else None,
@@ -209,7 +210,7 @@ class PCIeInjectorSoC(SoCSDRAM):
 
         if not with_cpu:
             # use serial as wishbone bridge when no cpu
-            self.add_cpu_or_bridge(UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=115200))
+            self.add_cpu_or_bridge(UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=3000000))
             self.add_wb_master(self.cpu_or_bridge.wishbone)
 
         # sdram
@@ -232,18 +233,26 @@ class PCIeInjectorSoC(SoCSDRAM):
             usb_pads.be.eq(0xf)
         ]
         self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, clk_freq)
-        self.submodules.usb_core = USBCore(self.usb_phy, clk_freq)
 
-        # usb <--> wishbone
-        self.submodules.etherbone = Etherbone(self.usb_core, self.usb_map["wishbone"])
-        self.add_wb_master(self.etherbone.master.bus)
+        if with_loopback:
+            self.submodules.usb_loopback_fifo = stream.SyncFIFO(phy_description(32), 2048)
+            self.comb += [
+                self.usb_phy.source.connect(self.usb_loopback_fifo.sink),
+                self.usb_loopback_fifo.source.connect(self.usb_phy.sink)
+            ]
+        else:
+            self.submodules.usb_core = USBCore(self.usb_phy, clk_freq)
 
-        # usb <--> tlp
-        self.submodules.tlp = TLP(self.usb_core, self.usb_map["tlp"])
-        self.comb += [
-            self.pciephy.source.connect(self.tlp.sender.sink),
-            self.tlp.receiver.source.connect(self.pciephy.sink)
-        ]
+            # usb <--> wishbone
+            self.submodules.etherbone = Etherbone(self.usb_core, self.usb_map["wishbone"])
+            self.add_wb_master(self.etherbone.master.bus)
+
+            # usb <--> tlp
+            self.submodules.tlp = TLP(self.usb_core, self.usb_map["tlp"])
+            self.comb += [
+                self.pciephy.source.connect(self.tlp.sender.sink),
+                self.tlp.receiver.source.connect(self.pciephy.sink)
+            ]
 
         # wishbone --> msi
         self.submodules.msi = MSI()
@@ -265,7 +274,7 @@ class PCIeInjectorSoC(SoCSDRAM):
         self.platform.add_period_constraint(self.crg.cd_usb.clk, 10.0)
         self.platform.add_period_constraint(self.platform.lookup_request("pcie_x1").clk_p, 10.0)
 
-        if with_pcie_analyzer:
+        if with_analyzer:
             analyzer_signals = [
                 self.pciephy.sink.valid,
                 self.pciephy.sink.ready,
