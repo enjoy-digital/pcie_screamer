@@ -228,11 +228,6 @@ class PCIeInjectorSoC(SoCSDRAM):
 
         # usb core
         usb_pads = platform.request("usb_fifo")
-        self.comb += [
-            usb_pads.rst.eq(1),
-            usb_pads.siwua.eq(1),
-            usb_pads.be.eq(0xf)
-        ]
         # self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, clk_freq, fifo_depth=16)
         self.submodules.usb_phy = FT601Sync(usb_pads, dw=32, timeout=1024)
 

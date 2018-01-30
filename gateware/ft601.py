@@ -72,7 +72,7 @@ class FT601Sync(Module):
         ]
 
         self.comb += [
-            pads.rst.eq(1),
+            pads.rst.eq(~ResetSignal("usb")),
             pads.be.eq(0xf),
             pads.siwua.eq(1),
             data_oe.eq(oe_n),
