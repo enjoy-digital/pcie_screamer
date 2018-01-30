@@ -28,3 +28,25 @@ It allows:
 - Having a full control of the PCIe core.
 - Sending/Receiving TLPs through USB 3.0 (or bufferize it to/from DDR3)
 - Using flexible software/tools on the Host for receiving/generating/analyzing the TLPs. (Wireshark dissectors, scapy, ...)
+
+## Getting started
+
+1. Install Python3 and Xilinx's Vivado software.
+
+2. Obtain LiteX and install it:
+```bash
+git clone https://github.com/enjoy-digital/litex --recursive
+cd litex
+python3 setup.py install
+cd ..
+ ```
+
+3. Build:
+```bash
+python3 pcie_injector.py
+  ```
+
+4. Flash design:
+```bash
+python3 flash.py
+```
