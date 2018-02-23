@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from litex.gen import *
-from litex.gen.genlib.resetsync import AsyncResetSynchronizer
+from migen import *
+from migen.genlib.resetsync import AsyncResetSynchronizer
 
 from litex.build.generic_platform import *
 from litex.build.xilinx import XilinxPlatform
@@ -15,8 +15,8 @@ from litedram.modules import MT41K256M16
 from litedram.phy import a7ddrphy
 
 from litepcie.phy.s7pciephy import S7PCIEPHY
-
 from liteusb.phy.ft245 import phy_description, FT245PHYSynchronous
+
 from gateware.usb import USBCore
 from gateware.etherbone import Etherbone
 from gateware.tlp import TLP

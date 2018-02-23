@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from litex.gen.genlib.misc import WaitTimer
+from migen.genlib.misc import WaitTimer
 
 from litex.soc.interconnect import stream
 from litex.soc.interconnect.stream import EndpointDescription

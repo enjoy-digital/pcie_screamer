@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from litex.gen import *
+from migen import *
+from migen.fhdl.specials import Tristate
 
 from litex.soc.interconnect import stream
-from litex.gen.fhdl.specials import Tristate
 
 from liteusb.phy.ft245 import phy_description
 
