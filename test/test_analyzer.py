@@ -1,4 +1,4 @@
-from litex.soc.tools.remote import RemoteClient
+from litex import RemoteClient
 from litescope.software.driver.analyzer import LiteScopeAnalyzerDriver
 
 wb = RemoteClient()

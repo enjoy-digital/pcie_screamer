@@ -3,7 +3,7 @@
 import sys
 import time
 
-from litex.soc.tools.remote import RemoteClient
+from litex import RemoteClient
 
 # DDR3 init and test for a7ddrphy design
 # use arty_ddr3 design with this script to
