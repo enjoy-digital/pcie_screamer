@@ -115,7 +115,7 @@ class USBPacketizer(Module):
             source.valid.eq(sink.valid),
             source.data.eq(sink.data),
             sink.ready.eq(source.ready),
-            If(source.ready & sink.last,
+            If(source.valid & source.ready & sink.last,
                 NextState("IDLE")
             )
         )
