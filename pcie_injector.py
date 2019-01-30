@@ -111,10 +111,9 @@ class Platform(XilinxPlatform):
 
 
     def do_finalize(self, fragment):
-        self.add_platform_command("""
-create_clock -name pcie_clk -period 10 [get_pins {{pcie_phy/pcie_support_i/pcie_i/inst/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtp_channel.gtpe2_channel_i/TXOUTCLK}}]
-""")
         XilinxPlatform.do_finalize(self, fragment)
+        from gateware import constraints
+        constraints.apply_xilinx_pcie_constraints(self)
 
 
 class _CRG(Module, AutoCSR):
@@ -223,6 +222,11 @@ class PCIeInjectorSoC(SoCSDRAM):
 
         # pcie endpoint
         self.submodules.pciephy = S7PCIEPHY(platform, platform.request("pcie_x1"), cd="sys")
+        self.pciephy.cd_pcie.clk.attr.add("keep")
+        platform.add_platform_command("create_clock -name pcie_clk -period 8 [get_nets pcie_clk]")
+        platform.add_false_path_constraints(
+            self.crg.cd_sys.clk,
+            self.pciephy.cd_pcie.clk)
 
         # usb core
         usb_pads = platform.request("usb_fifo")
