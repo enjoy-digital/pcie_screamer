@@ -15,7 +15,7 @@ from litedram.modules import MT41K256M16
 from litedram.phy import a7ddrphy
 
 from litepcie.phy.s7pciephy import S7PCIEPHY
-from liteusb.phy.ft245 import phy_description, FT245PHYSynchronous
+from litex.soc.cores.usb_fifo import phy_description, FT245PHYSynchronous
 
 from gateware.usb import USBCore
 from gateware.etherbone import Etherbone

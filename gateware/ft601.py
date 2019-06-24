@@ -3,8 +3,7 @@ from migen import *
 from migen.fhdl.specials import Tristate
 
 from litex.soc.interconnect import stream
-
-from liteusb.phy.ft245 import phy_description
+from litex.soc.cores.usb_fifo import phy_description
 
 class FT601Sync(Module):
     def __init__(self, pads, dw=32, timeout=1024):
