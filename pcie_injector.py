@@ -15,7 +15,7 @@ from litedram.modules import MT41K256M16
 from litedram.phy import a7ddrphy
 
 from litepcie.phy.s7pciephy import S7PCIEPHY
-from litex.soc.cores.usb_fifo import phy_description, FT245PHYSynchronous
+from litex.soc.cores.usb_fifo import phy_description
 
 from gateware.usb import USBCore
 from gateware.etherbone import Etherbone
@@ -230,7 +230,6 @@ class PCIeInjectorSoC(SoCSDRAM):
 
         # usb core
         usb_pads = platform.request("usb_fifo")
-        # self.submodules.usb_phy = FT245PHYSynchronous(usb_pads, clk_freq, fifo_depth=16)
         self.submodules.usb_phy = FT601Sync(usb_pads, dw=32, timeout=1024)
 
         if with_loopback:

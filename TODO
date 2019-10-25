@@ -1,3 +1,0 @@
-- add MSI software support
-- cleanup FTDI software (only working on windows, would be better to have linux only or if possible linux/windows)
-- add examples
