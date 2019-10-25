@@ -210,8 +210,8 @@ class PCIeInjectorSoC(SoCSDRAM):
 
         if not with_cpu:
             # use serial as wishbone bridge when no cpu
-            self.add_cpu(UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=3000000))
-            self.add_wb_master(self.cpu.wishbone)
+            self.submodules.bridge = UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=3000000)
+            self.add_wb_master(self.bridge.wishbone)
 
         # sdram
         self.submodules.ddrphy = a7ddrphy.A7DDRPHY(platform.request("ddram"))
