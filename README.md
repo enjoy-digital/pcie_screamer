@@ -48,5 +48,5 @@ python3 pcie_injector.py
 
 4. Flash design:
 ```bash
-python3 flash.py
+openocd -f openocd/openocd.cfg
 ```
