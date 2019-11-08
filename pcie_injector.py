@@ -25,7 +25,7 @@ from gateware.ft601 import FT601Sync
 
 from litescope import LiteScopeAnalyzer
 
-from platforms import pciescreamer_r02, screamerm2_r01
+from platforms import pciescreamer_r02, screamerm2_r02
 
 
 class _CRG(Module, AutoCSR):
@@ -39,7 +39,7 @@ class _CRG(Module, AutoCSR):
 
         # usb clock domain (100MHz from usb)
         self.comb += self.cd_usb.clk.eq(platform.request("usb_fifo_clock"))
-        self.specials += AsyncResetSynchronizer(self.cd_usb, ResetSignal("pcie"))
+        # self.specials += AsyncResetSynchronizer(self.cd_usb, ResetSignal("pcie")) # XXX PO: for testing USB while PCIe link is not working
 
         clk100 = platform.request("clk100")
 
@@ -94,14 +94,14 @@ class _CRG(Module, AutoCSR):
         self.specials += Instance("IDELAYCTRL", i_REFCLK=ClockSignal("clk200"), i_RST=ic_reset)
 
 
-class PCIeInjectorSoC(SoCSDRAM):
+class PCIeInjectorSoC(SoCCore):
     csr_map = {
         "ddrphy":   16,
         "pciephy":  17,
         "msi":      18,
         "analyzer": 19
     }
-    csr_map.update(SoCSDRAM.csr_map)
+    csr_map.update(SoCCore.csr_map)
 
     usb_map = {
         "wishbone": 0,
@@ -110,7 +110,7 @@ class PCIeInjectorSoC(SoCSDRAM):
 
     def __init__(self, platform, with_cpu=False, with_analyzer=True, with_loopback=False):
         clk_freq = int(100e6)
-        SoCSDRAM.__init__(self, platform, clk_freq,
+        SoCCore.__init__(self, platform, clk_freq,
             cpu_type="lm32" if with_cpu else None,
             integrated_rom_size=0x8000 if with_cpu else 0,
             integrated_sram_size=0x8000,
@@ -126,11 +126,11 @@ class PCIeInjectorSoC(SoCSDRAM):
             self.add_wb_master(self.bridge.wishbone)
 
         # sdram
-        self.submodules.ddrphy = a7ddrphy.A7DDRPHY(platform.request("ddram"))
-        sdram_module = MT41K256M16(self.clk_freq, "1:4")
-        self.register_sdram(self.ddrphy,
-                            sdram_module.geom_settings,
-                            sdram_module.timing_settings)
+        # self.submodules.ddrphy = a7ddrphy.A7DDRPHY(platform.request("ddram"))
+        # sdram_module = MT41K256M16(self.clk_freq, "1:4")
+        # self.register_sdram(self.ddrphy,
+        #                     sdram_module.geom_settings,
+        #                     sdram_module.timing_settings)
 
         # pcie endpoint
         self.submodules.pciephy = S7PCIEPHY(platform, platform.request("pcie_x1"), cd="sys")
@@ -173,6 +173,10 @@ class PCIeInjectorSoC(SoCSDRAM):
         self.sync.usb += usb_counter.eq(usb_counter + 1)
         self.comb += platform.request("user_led", 0).eq(usb_counter[26])
 
+        # sys_counter = Signal(32)
+        # self.sync += sys_counter.eq(sys_counter + 1)
+        # self.comb += platform.request("user_led", 0).eq(sys_counter[26])
+
         pcie_counter = Signal(32)
         self.sync.pcie += pcie_counter.eq(pcie_counter + 1)
         self.comb += platform.request("user_led", 1).eq(pcie_counter[26])
@@ -206,8 +210,9 @@ class PCIeInjectorSoC(SoCSDRAM):
 
 
 def main():
-    platform = Platform()
-    soc = PCIeInjectorSoC(platform)
+    # platform = pciescreamer_r02.Platform()
+    platform = screamerm2_r02.Platform()
+    soc = PCIeInjectorSoC(platform, with_loopback=True)
     builder = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
     vns = builder.build()
     soc.do_exit(vns)
