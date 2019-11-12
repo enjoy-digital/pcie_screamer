@@ -19,14 +19,14 @@ _io = [
         IOStandard("LVCMOS33"),
     ),
 
-    ("pcie_x1", 0,
-        Subsignal("rst_n", Pins("M1"), IOStandard("LVCMOS33")),
+    ("pcie_x4", 0,
+        Subsignal("rst_n", Pins("M1"), IOStandard("LVCMOS33"), Misc("PULLUP=TRUE")),
         Subsignal("clk_p", Pins("D6")),
         Subsignal("clk_n", Pins("D5")),
-        Subsignal("rx_p", Pins("A4")),
-        Subsignal("rx_n", Pins("A3")),
-        Subsignal("tx_p", Pins("B2")),
-        Subsignal("tx_n", Pins("B1"))
+        Subsignal("rx_p", Pins("A4 C4 E4 G4")),
+        Subsignal("rx_n", Pins("A3 C3 E3 G3")),
+        Subsignal("tx_p", Pins("B2 D2 F2 H2")),
+        Subsignal("tx_n", Pins("B1 D1 F1 H1"))
     ),
 
     ("usb_fifo_clock", 0, Pins("E13"), IOStandard("LVCMOS33")),

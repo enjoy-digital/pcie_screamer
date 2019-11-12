@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import argparse
+
 from migen import *
 from migen.genlib.resetsync import AsyncResetSynchronizer
 
@@ -21,8 +23,6 @@ from gateware.msi import MSI
 from gateware.ft601 import FT601Sync
 
 from litescope import LiteScopeAnalyzer
-
-from platforms import pciescreamer_r02, screamerm2_r02
 
 
 class _CRG(Module, AutoCSR):
@@ -122,9 +122,17 @@ class PCIeInjectorSoC(SoCCore):
             self.submodules.bridge = UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=3000000)
             self.add_wb_master(self.bridge.wishbone)
 
+        try:
+            pcie_x = "pcie_x4"
+            pcie_pads = platform.request(pcie_x)
+        except ConstraintError:
+            pcie_x = "pcie_x1"
+            pcie_pads = platform.request(pcie_x)
 
         # pcie endpoint
-        self.submodules.pciephy = S7PCIEPHY(platform, platform.request("pcie_x1"), cd="sys")
+        self.submodules.pciephy = S7PCIEPHY(platform, pcie_pads, cd="sys")
+        if pcie_x == "pcie_x4":
+            self.pciephy.use_external_hard_ip(os.path.join("pcie", "xilinx", "7-series"))
         self.pciephy.cd_pcie.clk.attr.add("keep")
         platform.add_platform_command("create_clock -name pcie_clk -period 8 [get_nets pcie_clk]")
         platform.add_false_path_constraints(
@@ -173,7 +181,7 @@ class PCIeInjectorSoC(SoCCore):
         self.crg.cd_usb.clk.attr.add("keep")
         self.platform.add_period_constraint(self.crg.cd_sys.clk, 10.0)
         self.platform.add_period_constraint(self.crg.cd_usb.clk, 10.0)
-        self.platform.add_period_constraint(self.platform.lookup_request("pcie_x1").clk_p, 10.0)
+        self.platform.add_period_constraint(self.platform.lookup_request(pcie_x).clk_p, 10.0)
 
         if with_analyzer:
             analyzer_signals = [
@@ -197,8 +205,18 @@ class PCIeInjectorSoC(SoCCore):
 
 
 def main():
-    # platform = pciescreamer_r02.Platform()
-    platform = screamerm2_r02.Platform()
+    platform_names = ["pciescreamer", "screamerm2"]
+
+    parser = argparse.ArgumentParser(description="PCIe Injector Test Gateware")
+    parser.add_argument("--platform", choices=platform_names, required=True)
+    args = parser.parse_args()
+
+    if args.platform == "pciescreamer":
+        from platforms import pciescreamer_r02 as target
+    elif args.platform == "screamerm2":
+        from platforms import screamerm2_r02 as target
+
+    platform = target.Platform()
     soc = PCIeInjectorSoC(platform, with_loopback=True)
     builder = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
     vns = builder.build()
