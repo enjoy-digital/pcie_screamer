@@ -60,7 +60,6 @@ class Platform(XilinxPlatform):
             ["write_cfgmem -force -format bin -interface spix4 -size 16 "
              "-loadbit \"up 0x0 {build_name}.bit\" -file {build_name}.bin"]
         self.programmer = programmer
-        # self.add_platform_command("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets usb_fifo_clock_IBUF]")
 
 
     def do_finalize(self, fragment):

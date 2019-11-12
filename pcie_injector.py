@@ -11,9 +11,6 @@ from litex.soc.integration.builder import *
 from litex.soc.interconnect import stream
 from litex.soc.cores.uart import UARTWishboneBridge
 
-from litedram.modules import MT41K256M16
-from litedram.phy import a7ddrphy
-
 from litepcie.phy.s7pciephy import S7PCIEPHY
 from litex.soc.cores.usb_fifo import phy_description
 
@@ -125,12 +122,6 @@ class PCIeInjectorSoC(SoCCore):
             self.submodules.bridge = UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=3000000)
             self.add_wb_master(self.bridge.wishbone)
 
-        # sdram
-        # self.submodules.ddrphy = a7ddrphy.A7DDRPHY(platform.request("ddram"))
-        # sdram_module = MT41K256M16(self.clk_freq, "1:4")
-        # self.register_sdram(self.ddrphy,
-        #                     sdram_module.geom_settings,
-        #                     sdram_module.timing_settings)
 
         # pcie endpoint
         self.submodules.pciephy = S7PCIEPHY(platform, platform.request("pcie_x1"), cd="sys")
@@ -172,10 +163,6 @@ class PCIeInjectorSoC(SoCCore):
         usb_counter = Signal(32)
         self.sync.usb += usb_counter.eq(usb_counter + 1)
         self.comb += platform.request("user_led", 0).eq(usb_counter[26])
-
-        # sys_counter = Signal(32)
-        # self.sync += sys_counter.eq(sys_counter + 1)
-        # self.comb += platform.request("user_led", 0).eq(sys_counter[26])
 
         pcie_counter = Signal(32)
         self.sync.pcie += pcie_counter.eq(pcie_counter + 1)
