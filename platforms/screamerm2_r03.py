@@ -19,6 +19,15 @@ _io = [
         IOStandard("LVCMOS33"),
     ),
 
+    ("pcie_x1", 0,
+        Subsignal("rst_n", Pins("M1"), IOStandard("LVCMOS33"), Misc("PULLUP=TRUE")),
+        Subsignal("clk_p", Pins("D6")),
+        Subsignal("clk_n", Pins("D5")),
+        Subsignal("rx_p", Pins("E4")),
+        Subsignal("rx_n", Pins("E3")),
+        Subsignal("tx_p", Pins("H2")),
+        Subsignal("tx_n", Pins("H1"))
+    ),
     ("pcie_x4", 0,
         Subsignal("rst_n", Pins("M1"), IOStandard("LVCMOS33"), Misc("PULLUP=TRUE")),
         Subsignal("clk_p", Pins("D6")),

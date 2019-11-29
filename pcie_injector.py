@@ -123,7 +123,8 @@ class PCIeInjectorSoC(SoCCore):
             self.add_wb_master(self.bridge.wishbone)
 
         try:
-            pcie_x = "pcie_x4"
+            # pcie_x = "pcie_x4"
+            pcie_x = "pcie_x1"
             pcie_pads = platform.request(pcie_x)
         except ConstraintError:
             pcie_x = "pcie_x1"
