@@ -36,7 +36,7 @@ class _CRG(Module, AutoCSR):
 
         # usb clock domain (100MHz from usb)
         self.comb += self.cd_usb.clk.eq(platform.request("usb_fifo_clock"))
-        # self.specials += AsyncResetSynchronizer(self.cd_usb, ResetSignal("pcie")) # XXX PO: for testing USB while PCIe link is not working
+        self.comb += self.cd_usb.rst.eq(ResetSignal("pcie"))
 
         clk100 = platform.request("clk100")
 
@@ -214,7 +214,7 @@ def main():
     if args.platform == "pciescreamer":
         from platforms import pciescreamer_r02 as target
     elif args.platform == "screamerm2":
-        from platforms import screamerm2_r02 as target
+        from platforms import screamerm2_r03 as target
 
     platform = target.Platform()
     soc = PCIeInjectorSoC(platform, with_loopback=True)
