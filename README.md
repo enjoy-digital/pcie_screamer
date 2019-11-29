@@ -43,7 +43,7 @@ cd ..
 
 3. Build:
 ```bash
-python3 pcie_injector.py
+python3 pcie_injector.py --platform screamerm2
   ```
 
 4. Flash design:

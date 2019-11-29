@@ -218,7 +218,7 @@ def main():
         from platforms import screamerm2_r03 as target
 
     platform = target.Platform()
-    soc = PCIeInjectorSoC(platform, with_loopback=True)
+    soc = PCIeInjectorSoC(platform)
     builder = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
     vns = builder.build()
     soc.do_exit(vns)
