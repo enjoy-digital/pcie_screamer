@@ -58,18 +58,9 @@ class PCIeScreamerSoC(SoCMini):
         self.submodules.bridge = UARTWishboneBridge(platform.request("serial"), sys_clk_freq, baudrate=3000000)
         self.add_wb_master(self.bridge.wishbone)
 
-        try:
-            # pcie_x = "pcie_x4"
-            pcie_x = "pcie_x1"
-            pcie_pads = platform.request(pcie_x)
-        except ConstraintError:
-            pcie_x = "pcie_x1"
-            pcie_pads = platform.request(pcie_x)
-
         # pcie endpoint
+        pcie_pads = platform.request("pcie_x1")
         self.submodules.pciephy = S7PCIEPHY(platform, pcie_pads, cd="sys")
-        if pcie_x == "pcie_x4":
-            self.pciephy.use_external_hard_ip(os.path.join("pcie", "xilinx", "7-series"))
         platform.add_platform_command("create_clock -name pcie_clk -period 8 [get_nets pcie_clk]")
         platform.add_false_path_constraints(
             self.crg.cd_sys.clk,
@@ -117,7 +108,7 @@ class PCIeScreamerSoC(SoCMini):
         # timing constraints
         self.platform.add_period_constraint(self.crg.cd_sys.clk, 10.0)
         self.platform.add_period_constraint(self.crg.cd_usb.clk, 10.0)
-        self.platform.add_period_constraint(self.platform.lookup_request(pcie_x).clk_p, 10.0)
+        self.platform.add_period_constraint(pcie_pads.clk_p, 10.0)
 
         if with_analyzer:
             analyzer_signals = [
