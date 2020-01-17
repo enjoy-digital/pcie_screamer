@@ -1,10 +1,10 @@
-# PCIe Injector
+# PCIe Screamer
 
 
 ## PCIe
 The PCIe bus is now the main high speed communication bus between a processor and its peripherials. It is used in all PC (sometime encapsulated in Thunderbolt) and now even in mobile phones.
 Doing security research on PCIe systems can requires very expensive tools (>$50k) and packet generaration for such tools is not
-a common feature. PCIe Injector provides a such tool at a more reasonable price.
+a common feature. PCIe Screamer provides a such tool at a more reasonable price.
 
 ![Global architecture](doc/board.png)
 
@@ -22,7 +22,7 @@ Currently, only few attacks were made on PCIe devices. Most of them were done us
 
 ## Principle
 
-The PCIe injector is based on a Artix7 FPGA from Xilinx connected to a DDR3 and a high speed USB 3.0 FT601 chip from FTDI.
+The PCIe Screamer is based on a Artix7 FPGA from Xilinx connected to a DDR3 and a high speed USB 3.0 FT601 chip from FTDI.
 
 It allows:
 - Having a full control of the PCIe core.
@@ -43,7 +43,7 @@ cd ..
 
 3. Build:
 ```bash
-python3 pcie_injector.py --platform screamerm2
+python3 pcie_screamer.py --platform screamerm2
   ```
 
 4. Flash design:

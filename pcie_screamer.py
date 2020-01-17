@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import argparse
 
 from migen import *
@@ -91,7 +92,7 @@ class _CRG(Module, AutoCSR):
         self.specials += Instance("IDELAYCTRL", i_REFCLK=ClockSignal("clk200"), i_RST=ic_reset)
 
 
-class PCIeInjectorSoC(SoCCore):
+class PCIeScreamerSoC(SoCCore):
     csr_map = {
         "ddrphy":   16,
         "pciephy":  17,
@@ -112,7 +113,7 @@ class PCIeInjectorSoC(SoCCore):
             integrated_rom_size=0x8000 if with_cpu else 0,
             integrated_sram_size=0x8000,
             with_uart=with_cpu,
-            ident="PCIe Injector example design",
+            ident="PCIe Screamer example design",
             with_timer=with_cpu
         )
         self.submodules.crg = _CRG(platform)
@@ -208,7 +209,7 @@ class PCIeInjectorSoC(SoCCore):
 def main():
     platform_names = ["pciescreamer", "screamerm2"]
 
-    parser = argparse.ArgumentParser(description="PCIe Injector Test Gateware")
+    parser = argparse.ArgumentParser(description="PCIe Screamer Test Gateware")
     parser.add_argument("--platform", choices=platform_names, required=True)
     args = parser.parse_args()
 
@@ -218,7 +219,7 @@ def main():
         from platforms import screamerm2_r03 as target
 
     platform = target.Platform()
-    soc = PCIeInjectorSoC(platform)
+    soc = PCIeScreamerSoC(platform)
     builder = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
     vns = builder.build()
     soc.do_exit(vns)
