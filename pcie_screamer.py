@@ -50,15 +50,8 @@ class _CRG(Module):
         self.comb += self.cd_usb.clk.eq(platform.request("usb_fifo_clock"))
         self.specials += AsyncResetSynchronizer(self.cd_usb, ResetSignal("pcie"))
 
-class PCIeScreamerSoC(SoCCore):
-    csr_map = {
-        "ddrphy":   16,
-        "pciephy":  17,
-        "msi":      18,
-        "analyzer": 19
-    }
-    csr_map.update(SoCCore.csr_map)
 
+class PCIeScreamerSoC(SoCCore):
     usb_map = {
         "wishbone": 0,
         "tlp":      1
@@ -97,6 +90,7 @@ class PCIeScreamerSoC(SoCCore):
         platform.add_false_path_constraints(
             self.crg.cd_sys.clk,
             self.pciephy.cd_pcie.clk)
+        self.add_csr("pciephy")
 
         # usb core
         usb_pads = platform.request("usb_fifo")
@@ -125,6 +119,7 @@ class PCIeScreamerSoC(SoCCore):
         # wishbone --> msi
         self.submodules.msi = MSI()
         self.comb += self.msi.source.connect(self.pciephy.msi)
+        self.add_csr("msi")
 
         # led blink
         usb_counter = Signal(32)
@@ -155,6 +150,7 @@ class PCIeScreamerSoC(SoCCore):
                 self.pciephy.source.be
             ]
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 1024)
+            self.add_csr("analyzer")
 
     def do_exit(self, vns):
         if hasattr(self, "analyzer"):
