@@ -123,21 +123,22 @@ class PCIeScreamer(SoCMini):
 # Build --------------------------------------------------------------------------------------------
 
 def main():
-    platform_names = ["pciescreamer", "screamerm2"]
-
+    boards = ["screamer", "screamer_m2"]
     parser = argparse.ArgumentParser(description="PCIe Screamer Test Gateware")
-    parser.add_argument("--platform", choices=platform_names, required=True)
+    parser.add_argument("--board", choices=boards, required=True)
+    parser.add_argument("--with-analyzer", action="store_true", help="enable Analyzer")
+    parser.add_argument("--with-loopback", action="store_true", help="enable USB Loopback")
     args = parser.parse_args()
 
-    if args.platform == "pciescreamer":
+    if args.board == "screamer":
         from platforms.pciescreamer_r02 import Platform
-    elif args.platform == "screamerm2":
+    elif args.platform == "screamer_m2":
         from platforms.screamerm2_r03 import Platform
 
     platform = Platform()
-    soc = PCIeScreamer(platform)
-    builder = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
-    vns = builder.build()
+    soc      = PCIeScreamer(platform, args.with_analyzer, args.with_loopback)
+    builder  = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
+    builder.build()
 
 if __name__ == "__main__":
     main()
