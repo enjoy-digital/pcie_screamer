@@ -1,3 +1,6 @@
+# This file is Copyright (c) 2016 Florent Kermarrec <florent@enjoy-digital.fr>
+# License: BSD
+
 from collections import OrderedDict
 
 from migen.genlib.misc import WaitTimer

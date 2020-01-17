@@ -1,3 +1,6 @@
+# This file is Copyright (c) 2016 Florent Kermarrec <florent@enjoy-digital.fr>
+# License: BSD
+
 from liteeth.common import *
 
 from litex.soc.interconnect import wishbone
