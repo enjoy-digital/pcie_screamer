@@ -37,35 +37,26 @@ class _CRG(Module):
         # sys
         self.submodules.pll = pll = S7PLL(speedgrade=-1)
         pll.register_clkin(platform.request("clk100"), 100e6)
-        pll.create_clkout(self.cd_sys,       sys_clk_freq)
+        pll.create_clkout(self.cd_sys, sys_clk_freq)
 
         # usb 100MHz
         self.comb += self.cd_usb.clk.eq(platform.request("usb_fifo_clock"))
         self.specials += AsyncResetSynchronizer(self.cd_usb, ResetSignal("pcie"))
 
 
-class PCIeScreamerSoC(SoCCore):
+class PCIeScreamerSoC(SoCMini):
     usb_map = {
         "wishbone": 0,
         "tlp":      1
     }
 
-    def __init__(self, platform, with_cpu=False, with_analyzer=True, with_loopback=False):
-        clk_freq = int(100e6)
-        SoCCore.__init__(self, platform, clk_freq,
-            cpu_type="lm32" if with_cpu else None,
-            integrated_rom_size=0x8000 if with_cpu else 0,
-            integrated_sram_size=0x8000,
-            with_uart=with_cpu,
-            ident="PCIe Screamer example design",
-            with_timer=with_cpu
-        )
-        self.submodules.crg = _CRG(platform, clk_freq)
+    def __init__(self, platform, with_analyzer=True, with_loopback=False):
+        sys_clk_freq = int(100e6)
+        SoCMini.__init__(self, platform, sys_clk_freq, ident="PCIe Screamer", ident_version=True)
+        self.submodules.crg = _CRG(platform, sys_clk_freq)
 
-        if not with_cpu:
-            # use serial as wishbone bridge when no cpu
-            self.submodules.bridge = UARTWishboneBridge(platform.request("serial"), clk_freq, baudrate=3000000)
-            self.add_wb_master(self.bridge.wishbone)
+        self.submodules.bridge = UARTWishboneBridge(platform.request("serial"), sys_clk_freq, baudrate=3000000)
+        self.add_wb_master(self.bridge.wishbone)
 
         try:
             # pcie_x = "pcie_x4"
@@ -96,7 +87,7 @@ class PCIeScreamerSoC(SoCCore):
                 self.usb_loopback_fifo.source.connect(self.usb_phy.sink)
             ]
         else:
-            self.submodules.usb_core = USBCore(self.usb_phy, clk_freq)
+            self.submodules.usb_core = USBCore(self.usb_phy, sys_clk_freq)
 
             # usb <--> wishbone
             self.submodules.etherbone = Etherbone(self.usb_core, self.usb_map["wishbone"])
