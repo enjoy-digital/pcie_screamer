@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from migen import *
 
 from litex.build.generic_platform import *
@@ -76,22 +73,13 @@ _io = [
 
 class Platform(XilinxPlatform):
     default_clk_name = "clk100"
-    default_clk_period = 10.0
+    default_clk_period = 1e9/100e6
 
-    def __init__(self, toolchain="vivado", programmer="vivado"):
-        XilinxPlatform.__init__(self, "xc7a35t-fgg484-2", _io,
-                                toolchain=toolchain)
+    def __init__(self):
+        XilinxPlatform.__init__(self, "xc7a35t-fgg484-2", _io, toolchain="vivado")
         self.toolchain.bitstream_commands = \
             ["set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]",
              "set_property BITSTREAM.CONFIG.CONFIGRATE 40 [current_design]"]
         self.toolchain.additional_commands = \
             ["write_cfgmem -force -format bin -interface spix4 -size 16 "
              "-loadbit \"up 0x0 {build_name}.bit\" -file {build_name}.bin"]
-        self.programmer = programmer
-        self.add_platform_command("set_property INTERNAL_VREF 0.750 [get_iobanks 35]")
-
-
-    def do_finalize(self, fragment):
-        XilinxPlatform.do_finalize(self, fragment)
-        from gateware import constraints
-        constraints.apply_xilinx_pcie_constraints(self)

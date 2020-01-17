@@ -1,11 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from migen import *
 
 from litex.build.generic_platform import *
 from litex.build.xilinx import XilinxPlatform
-
 
 _io = [
     ("clk100", 0, Pins("R2"), IOStandard("LVCMOS33")),
@@ -20,16 +16,25 @@ _io = [
     ),
 
     ("pcie_x1", 0,
-        Subsignal("rst_n", Pins("M1"), IOStandard("LVCMOS33")),
+        Subsignal("rst_n", Pins("M1"), IOStandard("LVCMOS33"), Misc("PULLUP=TRUE")),
         Subsignal("clk_p", Pins("D6")),
         Subsignal("clk_n", Pins("D5")),
-        Subsignal("rx_p", Pins("A4")),
-        Subsignal("rx_n", Pins("A3")),
-        Subsignal("tx_p", Pins("B2")),
-        Subsignal("tx_n", Pins("B1"))
+        Subsignal("rx_p", Pins("E4")),
+        Subsignal("rx_n", Pins("E3")),
+        Subsignal("tx_p", Pins("H2")),
+        Subsignal("tx_n", Pins("H1"))
+    ),
+    ("pcie_x4", 0,
+        Subsignal("rst_n", Pins("M1"), IOStandard("LVCMOS33"), Misc("PULLUP=TRUE")),
+        Subsignal("clk_p", Pins("D6")),
+        Subsignal("clk_n", Pins("D5")),
+        Subsignal("rx_p", Pins("E4 A4 C4 G4")),
+        Subsignal("rx_n", Pins("E3 A3 C3 G3")),
+        Subsignal("tx_p", Pins("H2 F2 D2 B2")),
+        Subsignal("tx_n", Pins("H1 F1 D1 B1"))
     ),
 
-    ("usb_fifo_clock", 0, Pins("C13"), IOStandard("LVCMOS33")),
+    ("usb_fifo_clock", 0, Pins("E13"), IOStandard("LVCMOS33")),
     ("usb_fifo", 0,
         Subsignal("rst", Pins("U15")),
         Subsignal("data", Pins("B9 A9 C9 A10 B10 B11 A12 B12 A13 A14 B14 A15 B15 B16 A17 B17",
@@ -48,22 +53,13 @@ _io = [
 
 class Platform(XilinxPlatform):
     default_clk_name = "clk100"
-    default_clk_period = 10.0
+    default_clk_period = 1e9/100e6
 
-    def __init__(self, toolchain="vivado", programmer="vivado"):
-        XilinxPlatform.__init__(self, "xc7a35t-csg325-2", _io,
-                                toolchain=toolchain)
+    def __init__(self):
+        XilinxPlatform.__init__(self, "xc7a35t-csg325-2", _io, toolchain=toolchain)
         self.toolchain.bitstream_commands = \
             ["set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]",
              "set_property BITSTREAM.CONFIG.CONFIGRATE 40 [current_design]"]
         self.toolchain.additional_commands = \
             ["write_cfgmem -force -format bin -interface spix4 -size 16 "
              "-loadbit \"up 0x0 {build_name}.bit\" -file {build_name}.bin"]
-        self.programmer = programmer
-        self.add_platform_command("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets usb_fifo_clock_IBUF]")
-
-
-    def do_finalize(self, fragment):
-        XilinxPlatform.do_finalize(self, fragment)
-        from gateware import constraints
-        constraints.apply_xilinx_pcie_constraints(self)
