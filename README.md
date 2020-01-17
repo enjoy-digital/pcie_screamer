@@ -14,19 +14,19 @@
 ![PCIe Screamer](doc/banner.jpg)
 
 ## Introduction
-The PCIe bus is now heavily used to interconnect chips in computers and embedded devices. Tools to interact with the PCIe bus can be very expensive (>$50k)
-and often limited when doing security research. The PCIe Screamer aims to offer an alternative for that at a reasonable price.
+The PCIe bus is now heavily used to interconnect chips in computers/embedded devices. Tools to interact with PCIe can be very expensive (>$50k)
+and often limited when doing security researchs. The PCIe Screamer aims to offer an alternative at a reasonable price.
 
 ## Architecture
-The PCIe Screamer is based on a Xilinx Artix7 FPGA with PCIe and USB3.0 interfaces:
+The PCIe Screamer uses a Xilinx Artix7 FPGA with PCIe and USB3.0 interfaces:
 - Xilinx Artix7 XC7A35T FPGA
 - FT601 FTDI USB 3.0
 - PCIe Gen2 X1 or X4 (M2)
 
 ## Example design
-A example design build with Migen and LiteX is provided and allow:
+A example design built with Migen and LiteX is provided and allows:
 - Redirecting PCIe TLP requests to the Host, using the Host to analyze/generate the TLP completion and sending it to the PCIe bus.
-- Generating PCIe TLP requests generated from the Host and redirecting the TLP completions to the Host.
+- Generating PCIe TLP requests from the Host and redirecting the TLP completions to the Host.
 
 ### Getting started
 ```sh
