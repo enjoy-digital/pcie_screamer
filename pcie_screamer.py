@@ -127,6 +127,9 @@ def main():
     parser.add_argument("--m2",            action="store_true", help="use M2 variant of PCIe Screamer")
     parser.add_argument("--with-analyzer", action="store_true", help="enable Analyzer")
     parser.add_argument("--with-loopback", action="store_true", help="enable USB Loopback")
+    parser.add_argument("--build", action="store_true", help="Build bitstream")
+    parser.add_argument("--load",  action="store_true", help="Load bitstream")
+    parser.add_argument("--flash", action="store_true", help="Flash bitstream")
     args = parser.parse_args()
 
     if args.m2:
@@ -136,7 +139,19 @@ def main():
     platform = Platform()
     soc      = PCIeScreamer(platform, args.with_analyzer, args.with_loopback)
     builder  = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
-    builder.build()
+    builder.build(run=args.build)
+
+    if args.load:
+        from litex.build.openocd import OpenOCD
+        prog = OpenOCD("openocd/openocd.cfg")
+        prog.load_bitstream("build/gateware/top.bit")
+
+    if args.flash:
+        from litex.build.openocd import OpenOCD
+        prog = OpenOCD("openocd/openocd.cfg",
+            flash_proxy_basename="openocd/bscan_spi_xc7a35t.bit")
+        prog.set_flash_proxy_dir(".")
+        prog.flash(0, "build/gateware/top.bit")
 
 if __name__ == "__main__":
     main()
