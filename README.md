@@ -1,52 +1,55 @@
-# PCIe Screamer
-
-
-## PCIe
-The PCIe bus is now the main high speed communication bus between a processor and its peripherials. It is used in all PC (sometime encapsulated in Thunderbolt) and now even in mobile phones.
-Doing security research on PCIe systems can requires very expensive tools (>$50k) and packet generaration for such tools is not
-a common feature. PCIe Screamer provides a such tool at a more reasonable price.
-
-![Global architecture](doc/board.png)
-
-## Board
-- Xilinx Artix7 XC7A50T FPGA
-- FT601 FTDI USB 3.0
-- MT41K256 4Gb DDR3 DRAM
-- PCIe Gen2 X1
-
-![Global architecture](doc/architecture.png)
-
-
-## History
-Currently, only few attacks were made on PCIe devices. Most of them were done using a Microblaze inside a Xilinx FPGA to send/receive the TLPs, making it hard to really analyze. (Using embedded C software to generate/analyze traffic) An other way is to use USB3380 chip, but it is also not flexible enough (only supporting 32bits addressing) and does not allow debugging the PCIe state machine.
-
-## Principle
-
-The PCIe Screamer is based on a Artix7 FPGA from Xilinx connected to a DDR3 and a high speed USB 3.0 FT601 chip from FTDI.
-
-It allows:
-- Having a full control of the PCIe core.
-- Sending/Receiving TLPs through USB 3.0 (or bufferize it to/from DDR3)
-- Using flexible software/tools on the Host for receiving/generating/analyzing the TLPs. (Wireshark dissectors, scapy, ...)
-
-## Getting started
-
-1. Install Python3 and Xilinx's Vivado software.
-
-2. Obtain LiteX and install it:
-```bash
-git clone https://github.com/enjoy-digital/litex --recursive
-cd litex
-python3 setup.py install
-cd ..
- ```
-
-3. Build:
-```bash
-python3 pcie_screamer.py --platform screamerm2
-  ```
-
-4. Flash design:
-```bash
-openocd -f openocd/openocd.cfg
 ```
+                        ___  _________    ____
+                       / _ \/ ___/  _/__ / __/__________ ___ ___ _  ___ ____
+                      / ___/ /___/ // -_)\ \/ __/ __/ -_) _ `/  ' \/ -_) __/
+                     /_/   \___/___/\__/___/\__/_/  \__/\_,_/_/_/_/\__/_/
+
+                             Copyright (c) 2016-2020, EnjoyDigital
+                             Copyright (c) 2016-2020, Lambdaconcept
+                                Powered by Migen & LiteX
+```
+
+# PCIe Screamer - TLPs experiments...
+
+![Global architecture](doc/pcie_screamer.jpg)
+![Global architecture](doc/pcie_screamer_m2.jpg)
+
+## Introduction
+The PCIe bus is now heavily used to interconnect chips in computers and embedded devices. Tools to interact with the PCIe bus can be very expensive (>$50k)
+and often limited when doing security research. The PCIe Screamer aims to offer an alternative for that at a reasonable price.
+
+## Architecture
+The PCIe Screamer is based on a Xilinx Artix7 FPGA with PCIe and USB3.0 interfaces:
+- Xilinx Artix7 XC7A35T FPGA
+- FT601 FTDI USB 3.0
+- PCIe Gen2 X1 or X4 (M2)
+
+## Example design
+A example design build with Migen and LiteX is provided and allow:
+- Redirecting PCIe TLP requests to the Host, using the Host to analyze/generate the TLP completion and sending it to the PCIe bus.
+- Generating PCIe TLP requests generated from the Host and redirecting the TLP completions to the Host.
+
+### Getting started
+```sh
+$ wget https://raw.githubusercontent.com/enjoy-digital/litex/master/litex_setup.py
+$ chmod +x litex_setup.py
+$ ./litex_setup.py init
+$ sudo ./litex_setup.py install
+```
+
+### Build the FPGA bitstream
+```sh
+$ ./pcie_screamer.py --build
+```
+
+### Load the FPGA bitstream
+```sh
+$ ./pcie_screamer.py --load
+```
+
+## Software support
+The Gateware/Software in this repository is just a proof of concept that has been done to evaluate and check the feasability of a low cost PCIe
+board/tool for security research.PCIe Screamer is well supported by [PCIe Leech](https://github.com/ufrisk/pcileech) and it is recommended to use it.
+
+## Get one
+The PCIe Screamer is available at: https://shop.lambdaconcept.com/
