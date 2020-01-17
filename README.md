@@ -11,8 +11,7 @@
 
 # PCIe Screamer - TLPs experiments...
 
-![Global architecture](doc/pcie_screamer.jpg)
-![Global architecture](doc/pcie_screamer_m2.jpg)
+![PCIe Screamer](doc/banner.jpg)
 
 ## Introduction
 The PCIe bus is now heavily used to interconnect chips in computers and embedded devices. Tools to interact with the PCIe bus can be very expensive (>$50k)
