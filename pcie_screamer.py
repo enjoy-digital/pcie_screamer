@@ -135,7 +135,6 @@ class PCIeScreamerSoC(SoCCore):
         self.submodules.pciephy = S7PCIEPHY(platform, pcie_pads, cd="sys")
         if pcie_x == "pcie_x4":
             self.pciephy.use_external_hard_ip(os.path.join("pcie", "xilinx", "7-series"))
-        self.pciephy.cd_pcie.clk.attr.add("keep")
         platform.add_platform_command("create_clock -name pcie_clk -period 8 [get_nets pcie_clk]")
         platform.add_false_path_constraints(
             self.crg.cd_sys.clk,
@@ -179,8 +178,6 @@ class PCIeScreamerSoC(SoCCore):
         self.comb += platform.request("user_led", 1).eq(pcie_counter[26])
 
         # timing constraints
-        self.crg.cd_sys.clk.attr.add("keep")
-        self.crg.cd_usb.clk.attr.add("keep")
         self.platform.add_period_constraint(self.crg.cd_sys.clk, 10.0)
         self.platform.add_period_constraint(self.crg.cd_usb.clk, 10.0)
         self.platform.add_period_constraint(self.platform.lookup_request(pcie_x).clk_p, 10.0)
