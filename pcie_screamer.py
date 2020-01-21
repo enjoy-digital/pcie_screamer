@@ -16,9 +16,9 @@ from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.interconnect import stream
 from litex.soc.cores.uart import UARTWishboneBridge
+from litex.soc.cores.usb_fifo import phy_description
 
 from litepcie.phy.s7pciephy import S7PCIEPHY
-from litex.soc.cores.usb_fifo import phy_description
 
 from gateware.usb import USBCore
 from gateware.etherbone import Etherbone
@@ -73,7 +73,6 @@ class PCIeScreamer(SoCMini):
 
         # PCIe PHY ---------------------------------------------------------------------------------
         self.submodules.pcie_phy = S7PCIEPHY(platform, platform.request("pcie_x1"))
-        self.pcie_phy.add_timing_constraints(platform)
         self.add_csr("pcie_phy")
 
         # USB FT601 PHY ----------------------------------------------------------------------------
