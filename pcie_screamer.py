@@ -141,20 +141,16 @@ def main():
         from platforms.pcie_screamer import Platform
     platform = Platform()
     soc      = PCIeScreamer(platform, args.with_analyzer, args.with_loopback)
-    builder  = Builder(soc, output_dir="build", csr_csv="test/csr.csv")
+    builder  = Builder(soc, csr_csv="test/csr.csv")
     builder.build(run=args.build)
 
     if args.load:
-        from litex.build.openocd import OpenOCD
-        prog = OpenOCD("openocd/openocd.cfg")
-        prog.load_bitstream("build/gateware/top.bit")
+        prog = soc.platform.create_programmer()
+        prog.load_bitstream(os.path.join(builder.gateware_dir, soc.build_name + ".bit"))
 
     if args.flash:
-        from litex.build.openocd import OpenOCD
-        prog = OpenOCD("openocd/openocd.cfg",
-            flash_proxy_basename="openocd/bscan_spi_xc7a35t.bit")
-        prog.set_flash_proxy_dir(".")
-        prog.flash(0, "build/gateware/top.bin")
+        prog = soc.platform.create_programmer()
+        prog.load_bitstream(os.path.join(builder.gateware_dir, soc.build_name + ".bin"))
 
 if __name__ == "__main__":
     main()
