@@ -8,8 +8,6 @@ from migen.genlib.misc import WaitTimer
 from litex.soc.interconnect import stream
 from litex.soc.interconnect.stream import EndpointDescription
 from litex.soc.interconnect.packet import *
-from litex.soc.interconnect.wishbonebridge import WishboneStreamingBridge
-
 
 packet_header_length = 12
 packet_header_fields = {

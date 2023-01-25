@@ -69,7 +69,7 @@ class PCIeScreamer(SoCMini):
 
         # Serial Wishbone Bridge -------------------------------------------------------------------
         self.submodules.bridge = UARTWishboneBridge(platform.request("serial"), sys_clk_freq, baudrate=3e6)
-        self.add_wb_master(self.bridge.wishbone)
+        self.bus.add_master(master=self.bridge.wishbone)
 
         # PCIe PHY ---------------------------------------------------------------------------------
         self.submodules.pcie_phy = S7PCIEPHY(platform, platform.request("pcie_x1"))
@@ -91,7 +91,7 @@ class PCIeScreamer(SoCMini):
 
             # USB <--> Wishbone --------------------------------------------------------------------
             self.submodules.etherbone = Etherbone(self.usb_core, self.usb_map["wishbone"])
-            self.add_wb_master(self.etherbone.master.bus)
+            self.bus.add_master(master=self.etherbone.master.bus)
 
             # USB <--> TLP -------------------------------------------------------------------------
             self.submodules.tlp = TLP(self.usb_core, self.usb_map["tlp"])
