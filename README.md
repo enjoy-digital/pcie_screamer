@@ -14,8 +14,7 @@
 ![PCIe Screamer](doc/banner.jpg)
 
 ## Introduction
-The PCIe bus is now heavily used to interconnect chips in computers/embedded devices. Tools to interact with PCIe can be very expensive (>$50k)
-and often limited when doing security researchs. The PCIe Screamer aims to offer an alternative at a reasonable price.
+The PCIe bus is now heavily used to interconnect chips in computers/embedded devices. Tools for interacting with PCIe can be very expensive (>$50k), and they may also be limited in their usefulness when conducting security research. The PCIe Screamer aims to offer an alternative at a reasonable price.
 
 ## Architecture
 The PCIe Screamer uses a Xilinx Artix7 FPGA with PCIe and USB3.0 interfaces:
